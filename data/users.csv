@@ -1,0 +1,4 @@
+id,username,hashed_password,full_name,email,role,is_active
+1,soporte,8f51a8428ee0230c0521b3279c574a774ae0064a902f6deecc396315eec96577,Soporte Técnico,soporte@tienda.com,soporte,True
+2,admin,240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9,Administrador General,admin@tienda.com,admin,True
+3,cajero1,41db78d43141a3159541b339523005cacc84c8501113fe32b231cf1fc04263eb,Bryan Alejandro Ruiz Restrepo,cajero1@tienda.com,caja,True

@@ -1,0 +1,17 @@
+store_inventory/Scripts/
+store_inventory/Lib/
+store_inventory/Include/
+store_inventory/pyvenv.cfg
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+
+.vscode/
+.idea/
+
+
+.DS_Store
+Thumbs.db

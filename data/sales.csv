@@ -1,0 +1,1 @@
+id,invoice_number,date,customer_id,subtotal,discount_applied,iva_applied,total_amount,payment_method,created_by_user_id,items,status

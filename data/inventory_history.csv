@@ -12,3 +12,5 @@ id,product_id,product_code,quantity_changed,new_quantity,movement_type,notes,use
 11,10,PRI001,15,55,ajuste_stock_aumento,Razón: Recepción de pedido proveedor XYZ. Notas: Lote #LOTE12345,1,2025-05-24 05:46:49.192500
 12,10,PRI001,10,65,ajuste_stock_aumento,Razón: Venta de 10 elementos. Notas: Lote #LOTE12345,1,2025-05-24 05:48:00.398401
 13,10,PRI001,-10,55,ajuste_stock_reduccion,Razón: VENTA de 10 elementos. Notas: Lote #LOTE12345,1,2025-05-24 05:49:31.040288
+14,1,LIP001,-2,48,venta,Venta asociada a factura ID: INV-1,3,2025-05-24 15:34:34.160959
+15,1,LIP001,2,50,cancelacion_venta,Cancelación de venta ID: INV-1,2,2025-05-24 16:38:18.698598

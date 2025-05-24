@@ -52,7 +52,10 @@ async def startup_db_client():
         "services.csv": ["id", "code", "description", "value", "created_by_user_id", "date_created", "last_updated_by_user_id", "last_updated_date", "is_active"],
         "service_price_history.csv": ["id", "service_id", "service_code", "old_value", "new_value", "changed_by_user_id", "change_date"],
         "customer_history.csv": ["id", "customer_id", "action", "details", "user_id", "date"],
-        "sales.csv": ["id", "invoice_number", "date", "customer_id", "subtotal", "discount_applied", "iva_applied", "total_amount", "payment_method", "created_by_user_id", "items", "status"], # status: "completed", "cancelled"
+        "sales.csv": [ "id", "invoice_number", "date", "customer_id", "customer_name", "customer_document",
+        "subtotal", "discount_value", "discount_percentage", "iva_applied", "iva_percentage_used", "total_amount",
+        "payment_method", "created_by_user_id", "created_by_username", "items", "status",
+        "cancellation_reason", "cancelled_by_user_id", "cancellation_date" ],
         "cash_records.csv": ["id", "date", "opened_by_user_id", "initial_balance", "cash_sales", "card_sales", "transfer_sales", "total_income", "expenses_details", "total_expenses", "expected_cash_in_box", "counted_cash", "difference", "cash_to_consign", "notes", "closed_by_user_id", "closing_time"]
     }
     

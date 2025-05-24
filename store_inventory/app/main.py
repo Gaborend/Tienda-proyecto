@@ -50,6 +50,7 @@ async def startup_db_client():
         "inventory.csv": ["id", "code", "description", "brand", "quantity", "cost_value", "sale_value", "date_added", "last_updated", "is_active", "category", "low_stock_alert_sent", "created_by_user_id", "updated_by_user_id"],
         "inventory_history.csv": ["id", "product_id", "product_code", "quantity_changed", "new_quantity", "movement_type", "notes", "user_id", "date"],
         "services.csv": ["id", "code", "description", "value", "created_by_user_id", "date_created", "last_updated_by_user_id", "last_updated_date", "is_active"],
+        "service_price_history.csv": ["id", "service_id", "service_code", "old_value", "new_value", "changed_by_user_id", "change_date"],
         "sales.csv": ["id", "invoice_number", "date", "customer_id", "subtotal", "discount_applied", "iva_applied", "total_amount", "payment_method", "created_by_user_id", "items", "status"], # status: "completed", "cancelled"
         "cash_records.csv": ["id", "date", "opened_by_user_id", "initial_balance", "cash_sales", "card_sales", "transfer_sales", "total_income", "expenses_details", "total_expenses", "expected_cash_in_box", "counted_cash", "difference", "cash_to_consign", "notes", "closed_by_user_id", "closing_time"]
     }
@@ -95,7 +96,7 @@ async def startup_db_client():
 app.include_router(configuration.router, prefix="/config", tags=["⚙️ Configuration & Users"])
 app.include_router(customer_management.router, prefix="/customers", tags=["👥 Customers"])
 app.include_router(inventory_management.router, prefix="/inventory", tags=["📦 Inventory"])
-app.include_router(service_management.router, prefix="/services", tags=["💅 Services"])
+app.include_router(service_management.router, prefix="/services", tags=["🔖 Services"])
 app.include_router(billing.router, prefix="/billing", tags=["🧾 Billing"])
 app.include_router(cash_balance.router, prefix="/cash-balance", tags=["💰 Cash Balance"])
 app.include_router(reports.router, prefix="/reports", tags=["📊 Reports"])
@@ -128,4 +129,4 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
 if __name__ == "__main__":
     import uvicorn
     # Para ejecutar: uvicorn app.main:app --reload
-    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True) 

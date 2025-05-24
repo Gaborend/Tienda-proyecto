@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 store_inventory/Scripts/
 store_inventory/Lib/
 store_inventory/Include/
@@ -14,4 +15,5 @@ __pycache__/
 
 
 .DS_Store
-Thumbs.db
+Thumbs.dbvenv/
+venv/

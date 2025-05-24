@@ -1,1 +1,14 @@
-id,product_id,quantity_changed,movement_type,notes,date,user_id
+id,product_id,product_code,quantity_changed,new_quantity,movement_type,notes,user_id,date
+1,1,LIP001,50,50,creacion_producto,Registro inicial de producto,1,2025-05-24 04:29:53.330407
+2,2,SOM001,30,30,creacion_producto,Registro inicial de producto,1,2025-05-24 05:15:00.800293
+3,3,BAS001,30,30,creacion_producto,Registro inicial de producto,1,2025-05-24 05:18:28.585998
+4,4,SOM002,20,20,creacion_producto,Registro inicial de producto,1,2025-05-24 05:18:59.568617
+5,5,LIP002,45,45,creacion_producto,Registro inicial de producto,1,2025-05-24 05:19:36.026156
+6,6,DEL001,60,60,creacion_producto,Registro inicial de producto,1,2025-05-24 05:19:49.506471
+7,7,POL001,35,35,creacion_producto,Registro inicial de producto,1,2025-05-24 05:20:07.175005
+8,8,MAS001,55,55,creacion_producto,Registro inicial de producto,1,2025-05-24 05:20:18.056123
+9,9,RUB001,28,28,creacion_producto,Registro inicial de producto,1,2025-05-24 05:20:24.948371
+10,10,PRI001,40,40,creacion_producto,Registro inicial de producto,1,2025-05-24 05:20:49.586088
+11,10,PRI001,15,55,ajuste_stock_aumento,Razón: Recepción de pedido proveedor XYZ. Notas: Lote #LOTE12345,1,2025-05-24 05:46:49.192500
+12,10,PRI001,10,65,ajuste_stock_aumento,Razón: Venta de 10 elementos. Notas: Lote #LOTE12345,1,2025-05-24 05:48:00.398401
+13,10,PRI001,-10,55,ajuste_stock_reduccion,Razón: VENTA de 10 elementos. Notas: Lote #LOTE12345,1,2025-05-24 05:49:31.040288

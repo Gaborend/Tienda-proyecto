@@ -47,8 +47,8 @@ async def startup_db_client():
     csv_files = {
         "users.csv": ["id", "username", "hashed_password", "full_name", "email", "role", "is_active"],
         "customers.csv": ["id", "document_type", "document_number", "full_name", "phone", "email", "address", "is_active"],
-        "inventory.csv": ["id", "code", "description", "brand", "quantity", "cost_value", "sale_value", "date_added", "last_updated", "is_active"],
-        "inventory_history.csv": ["id", "product_id", "quantity_changed", "movement_type", "notes", "date", "user_id"],
+        "inventory.csv": ["id", "code", "description", "brand", "quantity", "cost_value", "sale_value", "date_added", "last_updated", "is_active", "category", "low_stock_alert_sent", "created_by_user_id", "updated_by_user_id"],
+        "inventory_history.csv": ["id", "product_id", "product_code", "quantity_changed", "new_quantity", "movement_type", "notes", "user_id", "date"],
         "services.csv": ["id", "code", "description", "value", "created_by_user_id", "date_created", "last_updated_by_user_id", "last_updated_date", "is_active"],
         "sales.csv": ["id", "invoice_number", "date", "customer_id", "subtotal", "discount_applied", "iva_applied", "total_amount", "payment_method", "created_by_user_id", "items", "status"], # status: "completed", "cancelled"
         "cash_records.csv": ["id", "date", "opened_by_user_id", "initial_balance", "cash_sales", "card_sales", "transfer_sales", "total_income", "expenses_details", "total_expenses", "expected_cash_in_box", "counted_cash", "difference", "cash_to_consign", "notes", "closed_by_user_id", "closing_time"]

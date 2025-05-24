@@ -1,0 +1,6 @@
+id,customer_id,action,details,user_id,date
+1,2,modificacion,"{""full_name"": ""Isabela Castro""}",2,2025-05-24 11:53:01.644040
+2,2,modificacion,"{""full_name"": ""Isabela Castro""}",2,2025-05-24 11:53:19.880170
+3,2,modificacion,"{""full_name"": ""Isabela Bolivar""}",2,2025-05-24 11:56:04.774769
+4,3,inactivacion,"{""inactivated"": true}",2,2025-05-24 12:00:25.541513
+5,3,modificacion,"{""is_active"": true}",2,2025-05-24 12:04:49.823737

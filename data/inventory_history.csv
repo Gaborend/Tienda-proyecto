@@ -18,3 +18,4 @@ id,product_id,product_code,quantity_changed,new_quantity,movement_type,notes,use
 17,11,XY001,-10,40,ajuste_stock_reduccion,Razón: perdida producto. Notas: Lote x23232,1,2025-05-24 20:17:09.556326
 18,11,XY001,-2,38,venta,Venta asociada a factura ID: INV-4,1,2025-05-24 20:57:14.397805
 19,11,XY001,2,40,cancelacion_venta,Cancelación de venta ID: INV-4,1,2025-05-24 21:07:21.907036
+20,2,SOM001,-4,26,venta,Venta asociada a factura ID: INV-6,1,2025-05-25 05:36:46.913839

@@ -1,6 +1,6 @@
 id,code,description,brand,quantity,cost_value,sale_value,date_added,last_updated,is_active,category,low_stock_alert_sent,created_by_user_id,updated_by_user_id
 1,LIP001,Labial Rojo Intenso Mate,BellezaTotal,50,5.5,12.99,2025-05-24 04:29:53.297626,2025-05-24 16:38:18.688855,True,Labiales,False,1,2
-2,SOM001,Sombra de Ojos Paleta Nude,CosmeticosEstrella,30,8.0,20.0,2025-05-24 05:15:00.754471,2025-05-24 05:15:00.754471,True,Ojos,False,1,1
+2,SOM001,Sombra de Ojos Paleta Nude,CosmeticosEstrella,26,8.0,20.0,2025-05-24 05:15:00.754471,2025-05-25 05:36:46.892203,True,Ojos,False,1,1
 3,BAS001,Base de Maquillaje Fluida Larga Duración - Tono Medio,PielPerfecta,30,12.0,25.99,2025-05-24 05:18:28.574893,2025-05-24 05:18:28.574893,True,Bases,False,1,1
 4,SOM002,Paleta de Sombras 'Atardecer Dorado' - 12 Colores,OjosDeEstrella,20,15.5,32.0,2025-05-24 05:18:59.558279,2025-05-24 05:18:59.558279,True,Ojos,False,1,1
 5,LIP002,Labial Líquido Indeleble Mate - Rojo Pasión,BocaSeductora,45,7.0,15.99,2025-05-24 05:19:36.017439,2025-05-24 05:19:36.017439,True,Labiales,False,1,1

@@ -56,7 +56,8 @@ async def startup_db_client():
         "subtotal", "discount_value", "discount_percentage", "iva_applied", "iva_percentage_used", "total_amount",
         "payment_method", "created_by_user_id", "created_by_username", "items", "status",
         "cancellation_reason", "cancelled_by_user_id", "cancellation_date" ],
-        "cash_records.csv": ["id", "date", "opened_by_user_id", "initial_balance", "cash_sales", "card_sales", "transfer_sales", "total_income", "expenses_details", "total_expenses", "expected_cash_in_box", "counted_cash", "difference", "cash_to_consign", "notes", "closed_by_user_id", "closing_time"]
+        "cash_records.csv": ["id", "date", "opened_by_user_id", "opened_by_username", "initial_balance", "cash_sales", "card_sales", "transfer_sales", "total_income_calculated","expenses_details", "total_expenses_recorded", "profit_of_the_day", "expected_cash_in_box",  "counted_cash_physical", "difference", 
+        "cash_to_consign", "notes", "closed_by_user_id", "closed_by_username", "closing_time", "status"]
     }
     
     for file, columns in csv_files.items():

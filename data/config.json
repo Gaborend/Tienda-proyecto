@@ -4,7 +4,7 @@
     "address": "Calle Falsa 123",
     "invoice_footer": "\u00a1Gracias por su compra!",
     "invoice_prefix": "INV-",
-    "next_invoice_number": 5,
+    "next_invoice_number": 9,
     "initial_cash_balance": 50000.0,
     "apply_iva_by_default": false,
     "iva_percentage": 19.0,

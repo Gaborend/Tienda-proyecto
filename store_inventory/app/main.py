@@ -57,7 +57,9 @@ async def startup_db_client():
         "payment_method", "created_by_user_id", "created_by_username", "items", "status",
         "cancellation_reason", "cancelled_by_user_id", "cancellation_date" ],
         "cash_records.csv": ["id", "date", "opened_by_user_id", "opened_by_username", "initial_balance", "cash_sales", "card_sales", "transfer_sales", "total_income_calculated","expenses_details", "total_expenses_recorded", "profit_of_the_day", "expected_cash_in_box",  "counted_cash_physical", "difference", 
-        "cash_to_consign", "notes", "closed_by_user_id", "closed_by_username", "closing_time", "status"]
+        "cash_to_consign", "notes", "closed_by_user_id", "closed_by_username", "closing_time", "status"],
+        "config_audit_log.csv": ["id", "timestamp", "user_id_performing_action", "username_performing_action",
+        "action_type", "target_entity_type", "target_entity_id", "details"]
     }
     
     for file, columns in csv_files.items():
@@ -73,6 +75,7 @@ async def startup_db_client():
             "contact_number": "000-000-0000",
             "address": "Calle Falsa 123",
             "invoice_footer": "¡Gracias por su compra!",
+            "store_logo_url": None,
             "invoice_prefix": "INV-",
             "next_invoice_number": 1,
             "initial_cash_balance": 50000.0, # Base de caja

@@ -1,0 +1,2 @@
+id,timestamp,user_id_performing_action,username_performing_action,action_type,target_entity_type,target_entity_id,details
+1,2025-05-25T12:28:50.683969+00:00,1,soporte,USER_UPDATED,user,3,"{""full_name"": {""old"": ""Bryan Alejandro"", ""new"": ""Bryan Ruiz""}}"

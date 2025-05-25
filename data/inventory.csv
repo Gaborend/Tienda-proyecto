@@ -9,3 +9,4 @@ id,code,description,brand,quantity,cost_value,sale_value,date_added,last_updated
 8,MAS001,Máscara de Pestañas Volumen Extremo - Negro,OjosDeEstrella,55,6.5,14.75,2025-05-24 05:20:18.024360,2025-05-24 05:20:18.024360,True,Ojos,False,1,1
 9,RUB001,Rubor en Crema Larga Duración - Tono Durazno,MejillasRadiantes,28,8.75,18.5,2025-05-24 05:20:24.925816,2025-05-24 05:20:24.925816,True,Rubores,False,1,1
 10,PRI001,Primer Facial Minimizador de Poros ,PielPerfecta,55,11.0,24.0,2025-05-24 05:20:49.569165,2025-05-24 06:00:28.103565,False,Primers,False,1,1
+11,XY001,Delineador resiste al agua,gato,40,8.0,20.0,2025-05-24 20:08:03.795293,2025-05-24 21:07:21.897951,True,PielPerfecta,False,1,1

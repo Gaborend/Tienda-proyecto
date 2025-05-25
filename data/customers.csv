@@ -2,3 +2,4 @@ id,document_type,document_number,full_name,phone,email,address,is_active,created
 1,CC,10203040,Ana García Pérez,3101234567,ana.garcia@email.com,Calle 10 # 20-30,True,2025-05-24 11:47:24.255881,2025-05-24 11:47:24.255881,4.0,4.0
 2,NIT,900123456-7,Isabela Bolivar,604-9876543,compras@bellezasas.com,Avenida Siempre Viva 742,True,2025-05-24 11:48:48.346172,2025-05-24 11:56:04.778075,4.0,2.0
 3,CE,7654321,Sofia C,3207654321,sophie.d@email.com,Carrera 5 # 6-7,True,2025-05-24 11:49:17.921192,2025-05-24 12:04:49.826820,4.0,2.0
+4,CC,27382738,Pedro s,323232,user232@example.com,direcc,True,2025-05-24 19:50:40.146020,2025-05-24 20:01:03.994829,3.0,1.0

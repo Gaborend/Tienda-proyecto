@@ -4,3 +4,7 @@ id,customer_id,action,details,user_id,date
 3,2,modificacion,"{""full_name"": ""Isabela Bolivar""}",2,2025-05-24 11:56:04.774769
 4,3,inactivacion,"{""inactivated"": true}",2,2025-05-24 12:00:25.541513
 5,3,modificacion,"{""is_active"": true}",2,2025-05-24 12:04:49.823737
+6,4,modificacion,"{""is_active"": false}",1,2025-05-24 19:57:16.975249
+7,4,modificacion,"{""is_active"": true}",1,2025-05-24 19:58:50.998346
+8,4,inactivacion,"{""inactivated"": true}",1,2025-05-24 20:00:16.652340
+9,4,modificacion,"{""is_active"": true}",1,2025-05-24 20:01:03.988038

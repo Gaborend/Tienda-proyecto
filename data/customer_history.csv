@@ -8,3 +8,13 @@ id,customer_id,action,details,user_id,date
 7,4,modificacion,"{""is_active"": true}",1,2025-05-24 19:58:50.998346
 8,4,inactivacion,"{""inactivated"": true}",1,2025-05-24 20:00:16.652340
 9,4,modificacion,"{""is_active"": true}",1,2025-05-24 20:01:03.988038
+10,1,modificacion,"{""document_type"": ""CC"", ""document_number"": ""10203040"", ""full_name"": ""Ana Garc\u00eda P\u00e9rez PEREZ"", ""phone"": ""3101234567"", ""email"": ""ana.garcia@email.com"", ""address"": ""Calle 10 # 20-30"", ""is_active"": true}",1,2025-05-26 13:47:19.829271
+11,1,inactivacion,"{""inactivated"": true}",1,2025-05-26 13:47:38.494014
+12,1,modificacion,"{""document_type"": ""CC"", ""document_number"": ""10203040"", ""full_name"": ""Ana Garc\u00eda P\u00e9rez PEREZ"", ""phone"": ""3101234567"", ""email"": ""ana.garcia@email.com"", ""address"": ""Calle 10 # 20-30"", ""is_active"": true}",1,2025-05-26 13:47:58.235391
+13,8,inactivacion,"{""inactivated"": true}",1,2025-05-26 13:53:11.331709
+14,8,modificacion,"{""document_type"": ""CC"", ""document_number"": ""22"", ""full_name"": ""cliente2"", ""phone"": ""1131313"", ""email"": ""bryanao.88@hotmail.com"", ""address"": null, ""is_active"": true}",1,2025-05-26 13:53:17.909322
+15,8,modificacion,"{""document_type"": ""CC"", ""document_number"": ""22"", ""full_name"": ""cliente2222"", ""phone"": ""1131313"", ""email"": ""bryanao.88@hotmail.com"", ""address"": null, ""is_active"": true}",1,2025-05-26 13:53:39.672480
+16,8,modificacion,"{""document_type"": ""NIT"", ""document_number"": ""22"", ""full_name"": ""cliente2222"", ""phone"": ""1131313"", ""email"": ""bryanao.88@hotmail.com"", ""address"": null, ""is_active"": true}",1,2025-05-26 13:53:47.852449
+17,8,modificacion,"{""document_type"": ""CC"", ""document_number"": ""22"", ""full_name"": ""cliente2222"", ""phone"": ""1131313"", ""email"": ""bryanao.88@hotmail.com"", ""address"": null, ""is_active"": true}",1,2025-05-26 13:54:00.714969
+18,2,modificacion,"{""document_type"": ""NIT"", ""document_number"": ""900123456-7"", ""full_name"": ""Isabela casillas"", ""phone"": ""604-9876543"", ""email"": ""compras@bellezasas.com"", ""address"": ""Avenida Siempre Viva 742"", ""is_active"": true}",1,2025-05-26 14:40:30.926486
+19,1,modificacion,"{""document_type"": ""CC"", ""document_number"": ""10203040"", ""full_name"": ""Ana Garc\u00eda P\u00e9rez PEREZz"", ""phone"": ""3101234567"", ""email"": ""ana.garcia@email.com"", ""address"": ""Calle 10 # 20-30"", ""is_active"": true}",1,2025-05-26 15:07:07.608019

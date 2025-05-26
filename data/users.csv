@@ -4,3 +4,5 @@ id,username,hashed_password,full_name,email,role,is_active
 3,cajero1,41db78d43141a3159541b339523005cacc84c8501113fe32b231cf1fc04263eb,Bryan Ruiz,cajero1@tienda.com,caja,True
 4,cajero2,f6af6e4d6c9315f6a693f27a4868f405edf15d97cbf661d8ac29071b2b6b5961,Andres Zapata Gutierrez,andres@gmail.com,caja,True
 5,cajero3,9376cc7a21a33b81c3f433951fb6009beb4e85b7a711f71c0c4775d35a461033,Jhon Franco,user2@example.com,caja,True
+6,cajero4,8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92,Lucía Fernández Z,bru060@gmail.com,caja,True
+7,cajero5,8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92,Carlos zapata zzzzz,brfdfd4060@gmail.com,caja,True

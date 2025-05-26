@@ -114,9 +114,9 @@ async def create_customer(
 # --- Rutas GET (sin cambios) ---
 @router.get("/", response_model=List[CustomerResponse])
 async def read_customers(
-    skip: int = 0,
-    limit: int = 100,
-    active_only: bool = Query(True, description="Filtrar solo clientes activos"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1),
+    active_only: bool = Query(None, description="Filtrar solo clientes activos (true/false) o mostrar todos (si no se envía)"), # Permitir no enviar para mostrar todos
     search: Optional[str] = Query(None, description="Buscar por nombre, documento o email"),
     current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
@@ -124,48 +124,118 @@ async def read_customers(
     if customers_df.empty:
         return []
 
-    if active_only:
-        customers_df = customers_df[customers_df["is_active"] == True]
+    if active_only is not None: # Solo filtrar si se provee el parámetro
+        customers_df = customers_df[customers_df["is_active"] == active_only]
     
     if search:
         search_lower = search.lower()
+        # Asegurarse que las columnas existan y manejar NaN antes de aplicar .str
         customers_df = customers_df[
-            customers_df["full_name"].str.lower().str.contains(search_lower, na=False) |
-            customers_df["document_number"].str.lower().str.contains(search_lower, na=False) |
-            customers_df["email"].str.lower().str.contains(search_lower, na=False)
+            customers_df["full_name"].astype(str).str.lower().str.contains(search_lower, na=False) |
+            customers_df["document_number"].astype(str).str.lower().str.contains(search_lower, na=False) |
+            customers_df["email"].astype(str).str.lower().str.contains(search_lower, na=False)
         ]
+    
+    # <<< --- INICIO DE LA CORRECCIÓN CRÍTICA --- >>>
+    # Reemplazar NaN y pd.NA con None para evitar errores de validación de Pydantic
+    # Esto es importante para campos Optional[str], Optional[int], etc.
+    df_for_response = customers_df.iloc[skip : skip + limit].copy() # Trabajar sobre una copia de la porción
+    
+    # Convertir columnas de fecha a datetime si son strings y asegurar que Pydantic las reciba bien
+    # Pandas to_datetime maneja diferentes formatos y devuelve NaT para inválidos.
+    if 'created_at' in df_for_response.columns:
+        df_for_response['created_at'] = pd.to_datetime(df_for_response['created_at'], errors='coerce')
+    if 'updated_at' in df_for_response.columns:
+        df_for_response['updated_at'] = pd.to_datetime(df_for_response['updated_at'], errors='coerce')
 
-    return customers_df.iloc[skip : skip + limit].to_dict(orient="records")
+    # Reemplazar NaT (Not a Time) resultante de conversiones fallidas por None, Pydantic lo maneja bien para Optional[datetime]
+    # Y reemplazar NaN y pd.NA genéricos con None para otros tipos de datos opcionales
+    # El método .replace es más amplio y puede manejar varios reemplazos
+    df_for_response = df_for_response.replace({pd.NaT: None, float('nan'): None, pd.NA: None})
+    # <<< --- FIN DE LA CORRECCIÓN CRÍTICA --- >>>
+
+    records = df_for_response.to_dict(orient="records")
+    
+    # Pydantic intentará convertir los valores a los tipos del modelo.
+    # Si 'created_at' o 'updated_at' son None (por NaT previo), Pydantic los aceptará para Optional[datetime].
+    # Si son Timestamps de Pandas, Pydantic también los manejará para campos datetime.
+    return records
 
 @router.get("/{customer_id}", response_model=CustomerResponse)
-async def read_customer(
+async def read_customer( # Esta es la función para buscar por ID
     customer_id: int,
     current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
     customers_df = load_df(CUSTOMERS_FILE, columns=CUSTOMER_COLUMNS)
-    customer_data = customers_df[customers_df["id"] == customer_id]
+    # Filtra para obtener una Serie (una fila) si el ID existe
+    customer_series = customers_df[customers_df["id"] == customer_id]
 
-    if customer_data.empty:
+    if customer_series.empty:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
     
-    return customer_data.iloc[0].to_dict()
+    # Convertir la primera (y única) fila encontrada a un diccionario
+    customer_dict = customer_series.iloc[0].to_dict()
+    
+    # <<< --- INICIO CORRECCIÓN CRÍTICA --- >>>
+    # Sanitizar NaN/NaT a None en el diccionario antes de que Pydantic valide
+    for key, value in customer_dict.items():
+        if pd.isna(value):  # pd.isna() es True para None, np.nan, pd.NaT
+            customer_dict[key] = None
+    
+    # Asegurar que los campos de fecha sean objetos datetime o None
+    # Esto es importante si tus fechas en CSV son strings y Pydantic espera datetime
+    if 'created_at' in customer_dict and customer_dict['created_at'] is not None:
+        customer_dict['created_at'] = pd.to_datetime(customer_dict['created_at'], errors='coerce')
+        if pd.isna(customer_dict['created_at']): # Si la conversión falla, poner None
+             customer_dict['created_at'] = None
+            
+    if 'updated_at' in customer_dict and customer_dict['updated_at'] is not None:
+        customer_dict['updated_at'] = pd.to_datetime(customer_dict['updated_at'], errors='coerce')
+        if pd.isna(customer_dict['updated_at']): # Si la conversión falla, poner None
+            customer_dict['updated_at'] = None
+    # <<< --- FIN CORRECCIÓN CRÍTICA --- >>>
+            
+    return customer_dict
 
-@router.get("/by_document/", response_model=CustomerResponse)
+
+@router.get("/by_document/", response_model=CustomerResponse) # Esta es la función para buscar por documento
 async def read_customer_by_document(
-    document_type: str,
-    document_number: str,
+    document_type: str = Query(...), # Hacemos los query params obligatorios
+    document_number: str = Query(...),
     current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
     customers_df = load_df(CUSTOMERS_FILE, columns=CUSTOMER_COLUMNS)
-    customer_data = customers_df[
-        (customers_df["document_type"] == document_type) &
-        (customers_df["document_number"] == document_number)
+    # Filtra para obtener una Serie (una fila) si el documento existe
+    customer_series = customers_df[
+        (customers_df["document_type"].astype(str) == document_type) &  # Asegurar comparación de strings
+        (customers_df["document_number"].astype(str) == document_number)
     ]
 
-    if customer_data.empty:
+    if customer_series.empty:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado con ese documento")
     
-    return customer_data.iloc[0].to_dict()
+    # Convertir la primera (y única) fila encontrada a un diccionario
+    customer_dict = customer_series.iloc[0].to_dict()
+
+    # <<< --- INICIO CORRECCIÓN CRÍTICA --- >>>
+    # Sanitizar NaN/NaT a None en el diccionario antes de que Pydantic valide
+    for key, value in customer_dict.items():
+        if pd.isna(value): # pd.isna() es True para None, np.nan, pd.NaT
+            customer_dict[key] = None
+
+    # Asegurar que los campos de fecha sean objetos datetime o None
+    if 'created_at' in customer_dict and customer_dict['created_at'] is not None:
+        customer_dict['created_at'] = pd.to_datetime(customer_dict['created_at'], errors='coerce')
+        if pd.isna(customer_dict['created_at']):
+             customer_dict['created_at'] = None
+
+    if 'updated_at' in customer_dict and customer_dict['updated_at'] is not None:
+        customer_dict['updated_at'] = pd.to_datetime(customer_dict['updated_at'], errors='coerce')
+        if pd.isna(customer_dict['updated_at']):
+            customer_dict['updated_at'] = None
+    # <<< --- FIN CORRECCIÓN CRÍTICA --- >>>
+
+    return customer_dict
 
 # --- Ruta PUT (MODIFICADA para añadir log) ---
 @router.put("/{customer_id}", response_model=CustomerResponse)

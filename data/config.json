@@ -1,8 +1,9 @@
 {
     "store_name": "Tienda de Maquillaje",
-    "contact_number": "000-000-0000",
-    "address": "Calle Falsa 123",
+    "contact_number": "3013081507",
+    "address": "Calle 12345",
     "invoice_footer": "\u00a1Gracias por su compra!",
+    "store_logo_url": null,
     "invoice_prefix": "INV-",
     "next_invoice_number": 9,
     "initial_cash_balance": 50000.0,

@@ -81,8 +81,11 @@ async def startup_db_client():
             "initial_cash_balance": 50000.0, # Base de caja
             "apply_iva_by_default": False,
             "iva_percentage": 19.0,
-            "low_stock_threshold": 5 # Para alertas de inventario
+            "low_stock_threshold": 5 ,
+           
         }
+      
+        
         with open(config_file_path, 'w') as f:
             json.dump(default_config, f, indent=4)
     
@@ -98,7 +101,7 @@ async def startup_db_client():
     else:
         # Si el archivo no existe, create_default_admin lo creará
         configuration.create_default_admin()
-
+        
 
 # Incluir routers de cada módulo
 app.include_router(configuration.router, prefix="/config", tags=["⚙️ Configuration & Users"])

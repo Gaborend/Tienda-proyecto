@@ -1,5 +1,5 @@
 // src/pages/DashboardPage.jsx
-import React, { useState, useEffect, useMemo } from 'react'; // <--- IMPORTAR useMemo
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import authService from '../services/authService';
 import configService from '../services/configService';
@@ -10,12 +10,10 @@ function DashboardPage() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  // Usar useMemo para que basicUser no cambie en cada render si el contenido es el mismo
-  const basicUser = useMemo(() => authService.getCurrentUser(), []); // <--- CAMBIO AQUÍ
+  const basicUser = useMemo(() => authService.getCurrentUser(), []);
 
   useEffect(() => {
     const token = authService.getToken();
-    // Ahora 'basicUser' es una dependencia estable gracias a useMemo
     if (token && basicUser && basicUser.userId) {
         const fetchUserDetails = async () => {
             setLoading(true);
@@ -39,35 +37,29 @@ function DashboardPage() {
     }
     else {
         console.log("No hay token en Dashboard, redirigiendo a login.");
-        // authService.logout(); // No es estrictamente necesario si no hay token
         navigate('/login');
         setLoading(false); 
     }
-  // Eliminamos basicUser del array de dependencias si usamos useMemo con []
-  // porque basicUser ahora es estable durante la vida del componente (a menos que cambie el localStorage y se fuerce un refresh)
-  // O, si se quisiera que reaccione a cambios en localStorage (más complejo), se necesitaría una estrategia diferente
-  // Para el caso común, useMemo con [] es suficiente para la estabilidad.
-  // Sin embargo, si basicUser realmente puede cambiar y el efecto DEBE re-ejecutarse,
-  // y la identidad del objeto es el problema, useMemo es la solución.
-  // Si dejamos basicUser aquí, y gracias a useMemo su referencia es estable, el efecto no se disparará innecesariamente.
-  }, [navigate, basicUser]); // Dejamos basicUser porque la lógica del if depende de él. useMemo asegura que su referencia sea estable.
+  }, [navigate, basicUser]);
 
   const handleLogout = () => {
     authService.logout();
     navigate('/login');
   };
 
-  // Los permisos ahora pueden usar 'basicUser' directamente ya que es estable
+  // Permisos para los enlaces
   const canAccessAdminSettings = basicUser && ['admin', 'soporte'].includes(basicUser.role);
   const canAccessCustomersPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
   const canAccessInventoryPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
   const canAccessServicesPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
   const canAccessBillingPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
   const canAccessSalesHistory = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
+  const canAccessCashBalance = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
+  const canAccessCashBalanceHistory = basicUser && ['admin', 'soporte'].includes(basicUser.role); // Permiso para historial de cuadres
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h2>¡Bienvenido a NoxSkin!</h2>
+      <h2>¡Bienvenido a NoxSkin!</h2> {/* Asumo que el nombre de la tienda es NoxSkin por el contexto anterior */}
       
       {loading && !currentUserDetails && <p>Cargando tu información...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -139,6 +131,27 @@ function DashboardPage() {
                 style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}
             >
                 Historial de Ventas 📜
+            </Link>
+          </p>
+      )}
+      {canAccessCashBalance && (
+          <p>
+            <Link 
+                to="/cash-balance" 
+                style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}
+            >
+                Cuadre de Caja 💵
+            </Link>
+          </p>
+      )}
+      {/* --- NUEVO ENLACE PARA HISTORIAL DE CUADRES DE CAJA --- */}
+      {canAccessCashBalanceHistory && (
+          <p>
+            <Link 
+                to="/cash-balance-history" 
+                style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}
+            >
+                Historial de Cuadres de Caja 📊
             </Link>
           </p>
       )}

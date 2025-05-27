@@ -8,7 +8,10 @@ import CustomersPage from './pages/CustomersPage';
 import InventoryPage from './pages/InventoryPage';
 import ServicesPage from './pages/ServicesPage';
 import BillingPage from './pages/BillingPage';
-import SalesHistoryPage from './pages/SalesHistoryPage'; // <-- IMPORTAR NUEVA PÁGINA
+import SalesHistoryPage from './pages/SalesHistoryPage';
+import CashBalancePage from './pages/CashBalancePage';
+import CashBalanceHistoryPage from './pages/CashBalanceHistoryPage'; // <-- IMPORTACIÓN CORREGIDA/AÑADIDA
+
 import './App.css';
 
 function App() {
@@ -68,13 +71,27 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        {/* --- NUEVA RUTA PARA HISTORIAL DE VENTAS --- */}
         <Route 
           path="/sales-history" 
           element={
-            // Permitir a admin, soporte y caja ver el historial
             <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}>
               <SalesHistoryPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/cash-balance" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}>
+              <CashBalancePage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/cash-balance-history" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'soporte']}> 
+              <CashBalanceHistoryPage /> {/* Ahora CashBalanceHistoryPage está definido */}
             </ProtectedRoute>
           } 
         />

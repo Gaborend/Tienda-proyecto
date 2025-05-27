@@ -12,7 +12,7 @@ function DashboardPage() {
   const basicUser = authService.getCurrentUser();
 
   useEffect(() => {
-    const token = authService.getToken(); // Verificar token primero
+    const token = authService.getToken();
     if (token && basicUser && basicUser.userId) {
         const fetchUserDetails = async () => {
             setLoading(true);
@@ -23,48 +23,44 @@ function DashboardPage() {
             } catch (err) {
                 setError('No se pudieron cargar los detalles completos del usuario.');
                 console.error("Error en DashboardPage al cargar detalles:", err);
-                // Si falla la carga de detalles pero hay token, podríamos quedarnos o redirigir
-                // Por ahora, solo mostramos el error.
             } finally {
                 setLoading(false);
             }
         };
         fetchUserDetails();
     } else if (token) {
-        // Hay token pero basicUser es problemático o no está.
-        // Esto podría indicar que localStorage está corrupto o 'userData' no se guardó bien.
         console.warn("Token presente pero datos de usuario básicos no disponibles en localStorage. Redirigiendo a login para re-autenticar.");
-        authService.logout(); // Limpiar estado inconsistente
+        authService.logout(); 
         navigate('/login');
-        setLoading(false); // Detener carga
+        setLoading(false);
     }
     else {
         console.log("No hay token en Dashboard, redirigiendo a login.");
         authService.logout(); 
         navigate('/login');
-        setLoading(false); // Detener carga
+        setLoading(false); 
     }
-  }, [navigate]); // basicUser no es una buena dependencia aquí porque su referencia podría cambiar causando re-ejecuciones.
-                  // La lógica ahora se basa más en el token y la carga inicial.
+  }, [navigate]);
 
   const handleLogout = () => {
     authService.logout();
     navigate('/login');
   };
 
-  // Permisos para enlaces
   const canAccessAdminSettings = basicUser && ['admin', 'soporte'].includes(basicUser.role);
   const canAccessCustomersPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
-  // --- PERMISOS ACTUALIZADOS ---
   const canAccessInventoryPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
   const canAccessServicesPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
-  // --- FIN PERMISOS ACTUALIZADOS ---
+  // Para el enlace de facturación, todos los roles logueados con acceso a la app deberían poder facturar.
+  // El ProtectedRoute para /billing ya define los roles ['admin', 'soporte', 'caja']
+  const canAccessBillingPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
+
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h2>¡Bienvenido a NoxSkin!</h2>
       
-      {loading && !currentUserDetails && <p>Cargando tu información...</p>} {/* Mostrar solo si realmente está cargando detalles */}
+      {loading && !currentUserDetails && <p>Cargando tu información...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       {currentUserDetails ? (
@@ -103,7 +99,6 @@ function DashboardPage() {
             </Link>
           </p>
       )}
-      {/* --- ENLACES ACTUALIZADOS --- */}
       {canAccessInventoryPage && ( 
           <p>
             <Link to="/inventory" style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
@@ -118,7 +113,19 @@ function DashboardPage() {
             </Link>
           </p>
       )}
-      {/* --- FIN ENLACES ACTUALIZADOS --- */}
+
+      {/* <<<--- NUEVO ENLACE PARA FACTURACIÓN --- >>> */}
+      {canAccessBillingPage && ( 
+          <p>
+            <Link 
+                to="/billing" 
+                style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}
+            >
+                Nueva Factura / Ventas 🧾
+            </Link>
+          </p>
+      )}
+      {/* <<<--- FIN NUEVO ENLACE --- >>> */}
       
       <button 
           onClick={handleLogout} 

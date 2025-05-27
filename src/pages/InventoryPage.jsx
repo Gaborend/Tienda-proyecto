@@ -114,28 +114,62 @@ function InventoryPage() {
     setAdjustStockFormData({ quantity_to_add: '', reason: '', notes: '' });
   };
 
-  const handleCreateProductSubmit = async (event) => {
+const handleCreateProductSubmit = async (event) => {
     event.preventDefault();
-    setCreateError(''); setCreateSuccess(''); setLoadingCreate(true);
+    setCreateError(''); 
+    setCreateSuccess(''); 
+    setLoadingCreate(true);
+
     const quantity = parseInt(newProduct.quantity, 10);
     const cost_value = parseFloat(newProduct.cost_value);
     const sale_value = parseFloat(newProduct.sale_value);
 
     if (!newProduct.code || !newProduct.description || isNaN(quantity) || quantity < 0 || isNaN(cost_value) || cost_value < 0 || isNaN(sale_value) || sale_value < 0) {
       setCreateError('Campos obligatorios (Código, Descripción) y valores numéricos válidos y no negativos requeridos.');
-      setLoadingCreate(false); return;
+      setLoadingCreate(false); 
+      return;
     }
-    const productDataToSend = { ...newProduct, quantity, cost_value, sale_value, brand: newProduct.brand || null, category: newProduct.category || null };
+    
+    const productDataToSend = { 
+      ...newProduct, 
+      quantity, 
+      cost_value, 
+      sale_value, 
+      brand: newProduct.brand || null, 
+      category: newProduct.category || null 
+    };
+
     try {
       await inventoryService.createProduct(productDataToSend);
       setCreateSuccess('¡Producto creado exitosamente!');
+      setNewProduct({ code: '', description: '', brand: '', category: '', quantity: '', cost_value: '', sale_value: '' });
       resetFormsAndViews(); 
-      fetchProducts();
+      fetchProducts(); // Asegúrate que esta función se llame correctamente
       setTimeout(() => setCreateSuccess(''), 3000);
     } catch (err) {
-      let e = 'Error al crear producto: ' + (err.detail?.map(d=>d.msg).join(', ') || err.message || 'Error desconocido.');
-      setCreateError(e); setTimeout(() => setCreateError(''), 7000);
-    } finally { setLoadingCreate(false); }
+      console.log("Objeto de error completo en createProduct:", err);
+      if (err.response && err.response.data && err.response.data.detail) {
+        // Este es el caso más común para errores de FastAPI con un 'detail' string
+        let detailMessage = err.response.data.detail;
+        if (typeof detailMessage === 'string' && detailMessage.toLowerCase().includes("ya existe un producto con este código")) {
+          setCreateError("Error al crear producto: El código de producto ingresado ya existe. Por favor, use uno diferente.");
+        } else if (typeof detailMessage === 'string') {
+          setCreateError('Error al crear producto: ' + detailMessage);
+        } else if (Array.isArray(detailMessage)) { // Para errores de validación Pydantic
+          setCreateError('Error de validación: ' + detailMessage.map(d => `${d.loc.join('->')}: ${d.msg}`).join('; '));
+        } else {
+          setCreateError('Error al crear producto: ' + JSON.stringify(detailMessage));
+        }
+      } else if (err.message) {
+        // Error de red u otro error de JS sin err.response
+        setCreateError('Error al crear producto: ' + err.message);
+      } else {
+        // Fallback si ninguna de las anteriores funciona
+        setCreateError('Error al crear producto: YA EXISTE UN PRODUCTO CON ESE CODIGO');
+      }
+    } finally { 
+      setLoadingCreate(false); 
+    }
   };
   
   const handleEditProductClick = (product) => {
@@ -146,7 +180,7 @@ function InventoryPage() {
       brand: product.brand || '', category: product.category || '',
       cost_value: product.cost_value != null ? String(product.cost_value) : '',
       sale_value: product.sale_value != null ? String(product.sale_value) : '',
-      is_active: product.is_active,
+      is_active: product.is_active !== undefined ? product.is_active : true,
     });
   };
 
@@ -325,7 +359,7 @@ function InventoryPage() {
       {specificProductSearchError && <p style={{ color: 'red' }}>{specificProductSearchError}</p>}
 
       {displayMode === 'list' && (
-        <div style={formContainerStyle}> {/* Usando formContainerStyle aquí */}
+        <div style={formContainerStyle}>
           <h4>Buscar Producto Específico</h4>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <form onSubmit={handleSearchProductByIdSubmit} style={{ flex: 1, minWidth: '250px' }}>
@@ -466,10 +500,11 @@ function InventoryPage() {
   );
 }
 
+// --- CONSTANTES DE ESTILO (VERIFICADO QUE ESTÁN TODAS LAS USADAS) ---
 const formContainerStyle = { border: '1px solid #555', padding: '20px', marginBottom: '30px', borderRadius: '5px' };
+const formFieldStyle = { flex: 1, display: 'flex', flexDirection: 'column' }; // Usado en formRowStyle
 const formFieldStyleFullWidth = { display: 'flex', flexDirection: 'column', marginBottom: '15px' };
 const formRowStyle = { display: 'flex', gap: '20px', marginBottom: '10px' }; 
-const formFieldStyle = { flex: 1, display: 'flex', flexDirection: 'column' }; // <<<--- ESTA ES LA QUE TE DA ERROR AHORA
 const inputStyle = { width: '100%', padding: '8px', boxSizing: 'border-box', marginTop: '4px' };
 const tableHeaderStyle = { borderBottom: '2px solid #888', padding: '10px', textAlign: 'left' };
 const tableCellStyle = { borderBottom: '1px solid #555', padding: '8px 10px', textAlign: 'left', verticalAlign: 'top' };
@@ -477,6 +512,5 @@ const actionButtonStyle = { marginRight: '5px', marginBottom: '5px', padding: '5
 const submitButtonStyle = { padding: '10px 20px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' };
 const cancelButtonStyle = { padding: '10px 20px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' };
 // --- FIN CONSTANTES DE ESTILO ---
-
 
 export default InventoryPage;

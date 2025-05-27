@@ -7,6 +7,7 @@ import AdminPage from './pages/AdminPage';
 import CustomersPage from './pages/CustomersPage';
 import InventoryPage from './pages/InventoryPage';
 import ServicesPage from './pages/ServicesPage';
+import BillingPage from './pages/BillingPage';
 import './App.css';
 
 function App() {
@@ -56,6 +57,14 @@ function App() {
           element={
             <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}> {/* AÑADIDO 'caja' */}
               <ServicesPage />
+            </ProtectedRoute>
+          } 
+        />
+                <Route 
+          path="/billing" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}>
+              <BillingPage />
             </ProtectedRoute>
           } 
         />

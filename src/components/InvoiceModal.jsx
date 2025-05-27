@@ -1,7 +1,7 @@
 // src/components/InvoiceModal.jsx
 import React from 'react';
 
-// Estilos para la vista en pantalla (sin cambios)
+// ... (estilos existentes se mantienen)
 const modalOverlayStyle = {
   position: 'fixed',
   top: 0,
@@ -91,19 +91,28 @@ const buttonStyle = {
   border: 'none',
 };
 
+const cancelledStatusStyle = {
+    color: 'red',
+    fontWeight: 'bold',
+    textAlign: 'center',
+    fontSize: '1.5em',
+    border: '2px dashed red',
+    padding: '10px',
+    marginTop: '15px',
+    marginBottom: '15px',
+};
 
-// CSS para impresión (AJUSTADO PARA MEJORAR ENCAJE DE CONTENIDO LARGO)
+
 const printStyles = `
   @media print {
-    html, body { /* Aplicar a html y body para reseteo de impresión */
+    html, body {
       width: 100%;
       height: auto !important;
       overflow: visible !important;
       background: #fff !important;
       margin: 0 !important;
       padding: 0 !important;
-      /* Tamaño de fuente base ligeramente más pequeño para impresión */
-      font-size: 10pt; /* Reducido de 12pt para ayudar a encajar más contenido */
+      font-size: 10pt; 
       -webkit-print-color-adjust: exact;
       print-color-adjust: exact;
     }
@@ -115,12 +124,12 @@ const printStyles = `
       visibility: visible;
     }
     .invoice-modal-printable {
-      position: static !important; /* Flujo de documento normal */
-      padding: 10mm 10mm 5mm 10mm; /* Margen inferior reducido un poco */
+      position: static !important; 
+      padding: 10mm 10mm 5mm 10mm; 
       border: none !important;
       box-shadow: none !important;
       color: #000 !important;
-      line-height: 1.3; /* Línea de altura para fuentes más pequeñas */
+      line-height: 1.3; 
       overflow: visible !important;
       height: auto !important;
       max-height: none !important;
@@ -136,16 +145,16 @@ const printStyles = `
       color: #000 !important;
       margin-top: 12px; 
       margin-bottom: 8px;
-      page-break-after: avoid; /* Intentar mantener títulos con su contenido */
+      page-break-after: avoid; 
     }
-    .invoice-modal-printable h1 { font-size: 16pt; } /* Ligeramente reducido */
-    .invoice-modal-printable h2 { font-size: 14pt; } /* Ligeramente reducido */
+    .invoice-modal-printable h1 { font-size: 16pt; } 
+    .invoice-modal-printable h2 { font-size: 14pt; } 
     
     .invoice-modal-printable .section-title-style {
-      font-size: 11pt; /* Reducido */
+      font-size: 11pt; 
       color: #000 !important;
       border-bottom: 1px solid #000 !important;
-      margin-top: 12px; /* Ajuste de margen */
+      margin-top: 12px; 
       margin-bottom: 4px;
     }
     .invoice-modal-printable table {
@@ -153,7 +162,7 @@ const printStyles = `
       border-collapse: collapse;
       margin-top: 8px;
       page-break-inside: auto;
-      font-size: 8.5pt; /* Reducido para celdas de tabla */
+      font-size: 8.5pt; 
     }
     .invoice-modal-printable table tr {
       page-break-inside: avoid;
@@ -161,14 +170,14 @@ const printStyles = `
     }
     .invoice-modal-printable table th {
       background-color: #f0f0f0 !important; 
-      border: 1px solid #555 !important; /* Borde más definido */
-      padding: 4px; /* Padding reducido */
+      border: 1px solid #555 !important; 
+      padding: 4px; 
       text-align: left;
       font-weight: bold;
     }
     .invoice-modal-printable table td {
-      border: 1px solid #555 !important; /* Borde más definido */
-      padding: 3px 4px; /* Padding reducido */
+      border: 1px solid #555 !important; 
+      padding: 3px 4px; 
       vertical-align: top;
     }
     .invoice-modal-printable .detail-row-print strong {
@@ -178,32 +187,42 @@ const printStyles = `
       margin-top: 12px;
       padding-top: 6px;
       border-top: 1px double #000 !important;
-      font-size: 10pt; /* Consistente con base */
+      font-size: 10pt; 
     }
     .invoice-modal-printable .totals-section-style .detail-row-print {
-      padding: 3px 0; /* Padding reducido */
+      padding: 3px 0; 
       border-bottom: 1px dotted #888;
     }
      .invoice-modal-printable .totals-section-style .detail-row-print:last-of-type {
       border-bottom: none;
     }
-
-    /* Estilos específicos para los mensajes del pie de página */
     .invoice-modal-printable .invoice-footer-message,
     .invoice-modal-printable .attended-by-message {
       text-align: center;
-      margin-top: 8px; /* Margen reducido */
-      font-size: 7.5pt; /* Fuente más pequeña para estos mensajes */
-      page-break-inside: avoid; /* Intentar mantenerlos juntos */
-      clear: both; /* Asegurar que no floten alrededor de otros elementos */
+      margin-top: 8px; 
+      font-size: 7.5pt; 
+      page-break-inside: avoid; 
+      clear: both; 
     }
      .invoice-modal-printable .invoice-footer-message {
-        margin-top: 15px; /* Un poco más de espacio antes del "Gracias" */
+        margin-top: 15px; 
      }
+     /* Estilo para información de cancelación en impresión */
+    .invoice-modal-printable .cancellation-details-print {
+        margin-top: 15px;
+        padding: 10px;
+        border: 1px dashed #888;
+        font-size: 9pt;
+        page-break-before: auto; /* Puede ir a nueva página si es necesario */
+    }
+    .invoice-modal-printable .cancellation-details-print p {
+        margin: 3px 0;
+    }
   }
 `;
 
-function InvoiceModal({ saleData, onClose, storeConfig }) {
+// MODIFICADO: Se añade `isViewingMode` como prop
+function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false }) {
   if (!saleData) return null;
 
   const handlePrint = () => {
@@ -222,7 +241,13 @@ function InvoiceModal({ saleData, onClose, storeConfig }) {
             <h2>Factura N°: {saleData.invoice_number}</h2>
           </div>
 
+          {/* Mostrar estado si está cancelada */}
+          {saleData.status === 'cancelled' && (
+            <div style={cancelledStatusStyle}>FACTURA CANCELADA</div>
+          )}
+
           <div style={sectionTitleStyle} className="section-title-style">Cliente</div>
+          {/* ... (resto de detalles del cliente) ... */}
           <div style={detailRowStyle} className="detail-row-print">
             <span>Nombre:</span> <strong>{saleData.customer_name}</strong>
           </div>
@@ -233,7 +258,9 @@ function InvoiceModal({ saleData, onClose, storeConfig }) {
             <span>Fecha:</span> <strong>{new Date(saleData.date).toLocaleString()}</strong>
           </div>
 
+
           <div style={sectionTitleStyle} className="section-title-style">Ítems</div>
+          {/* ... (tabla de ítems) ... */}
           <table style={tableStyle}>
             <thead>
               <tr>
@@ -256,6 +283,7 @@ function InvoiceModal({ saleData, onClose, storeConfig }) {
           </table>
 
           <div style={totalsSectionStyle} className="totals-section-style">
+            {/* ... (subtotal, descuento, IVA, TOTAL) ... */}
             <div style={detailRowStyle} className="detail-row-print"><span>Subtotal:</span> <strong>{saleData.subtotal.toFixed(2)}</strong></div>
             <div style={detailRowStyle} className="detail-row-print"><span>Descuento:</span> <strong>- {saleData.discount_value.toFixed(2)}</strong></div>
             {saleData.iva_applied && (
@@ -264,16 +292,26 @@ function InvoiceModal({ saleData, onClose, storeConfig }) {
                 <strong>+ {(saleData.total_amount - (saleData.subtotal - saleData.discount_value)).toFixed(2)}</strong>
               </div>
             )}
-            <div style={{...detailRowStyle, fontSize: '1.2em', marginTop: '8px', borderTop: '1px solid #333', paddingTop: '5px'}} className="detail-row-print"> {/* Ajuste visual para TOTAL */}
+            <div style={{...detailRowStyle, fontSize: '1.3em', marginTop: '10px', borderTop: '1px solid #333', paddingTop: '5px'}} className="detail-row-print">
               <span><strong>TOTAL:</strong></span> <strong>{saleData.total_amount.toFixed(2)}</strong>
             </div>
-             <div style={{...detailRowStyle, marginTop: '8px'}} className="detail-row-print">
+             <div style={{...detailRowStyle, marginTop: '10px'}} className="detail-row-print">
                 <span>Método de Pago:</span> <strong>{saleData.payment_method}</strong>
             </div>
           </div>
 
-          {/* Añadir clases a los párrafos del pie de página */}
-          {storeConfig?.invoice_footer && (
+          {/* Mostrar detalles de cancelación si existen */}
+          {saleData.status === 'cancelled' && saleData.cancellation_date && (
+            <div className="cancellation-details-print" style={{ marginTop: '20px', padding: '10px', border: '1px solid #ccc', backgroundColor: '#f9f9f9' }}>
+              <h3 style={{ color: 'red', fontSize: '1.1em' }}>Detalles de Cancelación:</h3>
+              <p><strong>Fecha de Cancelación:</strong> {new Date(saleData.cancellation_date).toLocaleString()}</p>
+              <p><strong>Motivo:</strong> {saleData.cancellation_reason}</p>
+              <p><strong>Cancelada por:</strong> {saleData.cancelled_by_user_id}</p> {/* Podrías buscar el username si lo tienes */}
+            </div>
+          )}
+
+          {/* ... (pie de página y "Atendido por") ... */}
+           {storeConfig?.invoice_footer && (
             <p className="invoice-footer-message" style={{ textAlign: 'center', marginTop: '20px', fontSize: '0.9em', fontStyle: 'italic' }}>
               {storeConfig.invoice_footer}
             </p>
@@ -282,12 +320,15 @@ function InvoiceModal({ saleData, onClose, storeConfig }) {
             Atendido por: {saleData.created_by_username}
           </p>
 
+
           <div style={actionButtonsStyle} className="modal-actions-print">
+            {/* El botón de imprimir siempre está disponible */}
             <button onClick={handlePrint} style={{...buttonStyle, backgroundColor: '#007bff', color: 'white'}}>
               Imprimir
             </button>
+            {/* Cambiar texto del botón de cerrar según el contexto */}
             <button onClick={onClose} style={{...buttonStyle, backgroundColor: '#6c757d', color: 'white'}}>
-              Cerrar / Nueva Venta
+              {isViewingMode ? 'Cerrar Vista' : 'Cerrar / Nueva Venta'}
             </button>
           </div>
         </div>

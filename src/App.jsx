@@ -8,6 +8,7 @@ import CustomersPage from './pages/CustomersPage';
 import InventoryPage from './pages/InventoryPage';
 import ServicesPage from './pages/ServicesPage';
 import BillingPage from './pages/BillingPage';
+import SalesHistoryPage from './pages/SalesHistoryPage'; // <-- IMPORTAR NUEVA PÁGINA
 import './App.css';
 
 function App() {
@@ -22,7 +23,7 @@ function App() {
         <Route 
           path="/dashboard" 
           element={
-            <ProtectedRoute> {/* Requiere solo estar logueado */}
+            <ProtectedRoute>
               <DashboardPage />
             </ProtectedRoute>
           } 
@@ -43,11 +44,10 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        {/* --- RUTAS ACTUALIZADAS --- */}
         <Route 
           path="/inventory" 
           element={
-            <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}> {/* AÑADIDO 'caja' */}
+            <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}>
               <InventoryPage />
             </ProtectedRoute>
           } 
@@ -55,12 +55,12 @@ function App() {
         <Route 
           path="/services" 
           element={
-            <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}> {/* AÑADIDO 'caja' */}
+            <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}>
               <ServicesPage />
             </ProtectedRoute>
           } 
         />
-                <Route 
+        <Route 
           path="/billing" 
           element={
             <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}>
@@ -68,7 +68,16 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        {/* --- FIN RUTAS ACTUALIZADAS --- */}
+        {/* --- NUEVA RUTA PARA HISTORIAL DE VENTAS --- */}
+        <Route 
+          path="/sales-history" 
+          element={
+            // Permitir a admin, soporte y caja ver el historial
+            <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}>
+              <SalesHistoryPage />
+            </ProtectedRoute>
+          } 
+        />
       </Routes>
     </div>
   );

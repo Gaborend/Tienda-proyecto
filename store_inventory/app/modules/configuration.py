@@ -73,9 +73,7 @@ class StoreConfig(BaseModel):
     contact_number: Optional[str] = None
     address: Optional[str] = None
     invoice_footer: Optional[str] = None
-    #  URL del Logo 
     store_logo_url: Optional[str] = Field(None, description="URL del logo de la tienda")
-    
     invoice_prefix: str = Field("INV-", min_length=1)
     next_invoice_number: int = Field(1, ge=1)
     initial_cash_balance: float = Field(0.0, ge=0)

@@ -1,6 +1,9 @@
 id,code,description,value,created_by_user_id,date_created,last_updated_by_user_id,last_updated_date,is_active,created_at,updated_at,updated_by_user_id
-1,SERV-NOC-01,Maquillaje Social de Noche (Intenso),130000.0,1,,,,True,2025-05-24 09:57:11.049240,2025-05-24 09:57:11.049240,1.0
-2,SERV-DIA-01,Maquillaje Social de Día (Natural),90000.0,1,,,,True,2025-05-24 09:59:32.161510,2025-05-24 09:59:32.161510,1.0
+1,SERV-NOC-01,Maquillaje Social de Noche ((Intenso)),155500.0,1,,,,True,2025-05-24 09:57:11.049240,2025-05-27 01:59:26.283792,1.0
+2,SERV-DIA-01,Maquillaje Social de Día (Natural),95000.0,1,,,,True,2025-05-24 09:59:32.161510,2025-05-27 00:39:51.277444,1.0
 3,SERV-CLS-01,Clase Personalizada de Automaquillaje,180000.0,1,,,,True,2025-05-24 09:59:42.222769,2025-05-24 09:59:42.222769,1.0
 4,SERV-NOV-01,Prueba de Maquillaje para Novias,350000.0,1,,,,True,2025-05-24 09:59:52.636279,2025-05-24 10:15:03.182364,1.0
 5,SERV-NO-02,Prueba de productos,12000.0,1,,,,True,2025-05-24 20:28:42.604757,2025-05-24 20:32:26.759261,1.0
+6,QW001,Servicio1,10000.0,1,,,,True,2025-05-27 00:17:11.930921,2025-05-27 00:17:11.930921,1.0
+7,1234,servicio2,11111.0,1,,,,True,2025-05-27 00:25:00.736176,2025-05-27 00:41:16.117392,1.0
+8,2121,DESCRIPCION1,2121.0,1,,,,True,2025-05-27 01:09:12.005540,2025-05-27 01:09:12.005540,1.0

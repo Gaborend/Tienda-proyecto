@@ -39,6 +39,7 @@ class ProductUpdate(BaseModel):
     category: Optional[str] = None
     cost_value: Optional[float] = Field(None, ge=0)
     sale_value: Optional[float] = Field(None, ge=0)
+    is_active: Optional[bool] = None 
     # La cantidad se actualiza por un endpoint específico de "add stock"
 
 class ProductResponse(ProductBase):
@@ -154,44 +155,93 @@ async def create_product(
     return ProductResponse(**new_product_data)
 
 
-@router.get("/", response_model=List[ProductResponse])
+@router.get("/", response_model=List[ProductResponse]) # Asegúrate que ProductResponse esté definido/importado
 async def read_products(
-    skip: int = 0,  
-    limit: int = 100,
-    active_only: bool = Query(True, description="Filtrar solo productos activos"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1),
+    active_only: bool = Query(None, description="Filtrar por estado activo (true/false). Si no se envía, no se filtra por estado."),
     search: Optional[str] = Query(None, description="Buscar por código, descripción o marca"),
     category: Optional[str] = Query(None, description="Filtrar por categoría"),
-    low_stock: Optional[bool] = Query(None, description="Filtrar productos con bajo stock"),
+    low_stock: Optional[bool] = Query(None, description="Filtrar productos con bajo stock (true) o no bajo stock (false)"),
     current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
     inventory_df = load_df(INVENTORY_FILE, columns=INVENTORY_COLUMNS)
+
     if inventory_df.empty:
         return []
 
-    if active_only:
-        inventory_df = inventory_df[inventory_df["is_active"] == True]
+    # Aplicar filtros secuencialmente
+    if active_only is not None:
+        # Asegurarse que la columna is_active sea booleana para la comparación
+        if 'is_active' in inventory_df.columns:
+            # Pandas puede leer 'TRUE'/'FALSE' como strings, o 1/0 como números.
+            # Convertir a booleano de forma segura es importante.
+            # Si ya son booleanos en el DataFrame, esta conversión es inocua.
+            # Si son strings "True"/"False", esto los convierte.
+            inventory_df['is_active'] = inventory_df['is_active'].astype(bool)
+            inventory_df = inventory_df[inventory_df["is_active"] == active_only]
     
     if search:
         search_lower = search.lower()
-        inventory_df = inventory_df[
-            inventory_df["code"].str.lower().str.contains(search_lower, na=False) |
-            inventory_df["description"].str.lower().str.contains(search_lower, na=False) |
-            inventory_df["brand"].str.lower().str.contains(search_lower, na=False)
-        ]
+        # Aplicar búsqueda solo si las columnas existen
+        conditions = pd.Series([False] * len(inventory_df), index=inventory_df.index)
+        if 'code' in inventory_df.columns:
+            conditions = conditions | inventory_df["code"].astype(str).str.lower().str.contains(search_lower, na=False)
+        if 'description' in inventory_df.columns:
+            conditions = conditions | inventory_df["description"].astype(str).str.lower().str.contains(search_lower, na=False)
+        if 'brand' in inventory_df.columns:
+            conditions = conditions | inventory_df["brand"].astype(str).str.lower().str.contains(search_lower, na=False)
+        inventory_df = inventory_df[conditions]
     
     if category:
-        inventory_df = inventory_df[inventory_df["category"].str.lower() == category.lower()]
+        if 'category' in inventory_df.columns:
+            inventory_df = inventory_df[inventory_df["category"].astype(str).str.lower() == category.lower()]
 
     if low_stock is not None:
-        settings = get_store_settings_sync()
-        threshold = settings.low_stock_threshold
-        if low_stock: # True: mostrar los que están bajos
-            inventory_df = inventory_df[inventory_df["quantity"] <= threshold]
-        else: # False: mostrar los que NO están bajos
-            inventory_df = inventory_df[inventory_df["quantity"] > threshold]
+        if 'quantity' in inventory_df.columns:
+            settings = get_store_settings_sync() 
+            threshold = settings.low_stock_threshold
+            if low_stock: # True: mostrar los que están bajos
+                inventory_df = inventory_df[inventory_df["quantity"] <= threshold]
+            else: # False: mostrar los que NO están bajos
+                inventory_df = inventory_df[inventory_df["quantity"] > threshold]
             
-    return inventory_df.iloc[skip : skip + limit].to_dict(orient="records")
+    # Aplicar paginación después de todos los filtros
+    paginated_df = inventory_df.iloc[skip : skip + limit]
 
+    # --- Sanitización de Datos para Pydantic ---
+    df_for_response = paginated_df.copy()
+    
+    # 1. Reemplazar NaN genéricos, pd.NA y NaT (para fechas) con None.
+    # Esto es bueno para campos OPCIONALES en Pydantic.
+    df_for_response = df_for_response.replace({pd.NaT: None, float('nan'): None, pd.NA: None})
+
+    # 2. Convertir columnas de fecha a objetos datetime de Pandas.
+    # Pydantic puede manejar bien los Timestamps de Pandas.
+    # Si la conversión falla (errors='coerce'), se volverán NaT, y el replace anterior los hizo None.
+    # Si el campo de fecha es OBLIGATORIO en ProductResponse, un valor None aquí causará un error de validación.
+    date_columns = ['date_added', 'last_updated']
+    for date_col in date_columns:
+        if date_col in df_for_response.columns:
+            df_for_response[date_col] = pd.to_datetime(df_for_response[date_col], errors='coerce')
+            # Volver a reemplazar NaT a None por si pd.to_datetime introdujo nuevos NaT y el campo es Optional
+            df_for_response[date_col] = df_for_response[date_col].replace({pd.NaT: None})
+
+
+    # 3. Asegurar tipos para campos numéricos y booleanos obligatorios si es necesario.
+    # Si un campo OBLIGATORIO (ej: cost_value: float) se convirtió en None arriba y no tiene un valor
+    # válido en el CSV, Pydantic fallará. La corrección principal es en el CSV para campos obligatorios.
+    # El modelo ProductResponse se encargará de la validación final del tipo.
+    # Por ejemplo, si `id` se leyó como float por tener NaN y luego se hizo None:
+    if 'id' in df_for_response.columns and df_for_response['id'].isnull().any():
+        print(f"ADVERTENCIA: La columna 'id' contiene valores nulos después de la sanitización. Esto fallará si 'id' es obligatorio en ProductResponse.")
+        # Podrías aquí decidir filtrar estas filas o asignar un ID por defecto si la lógica lo permite (no recomendado para IDs)
+        # Ejemplo de filtrado: df_for_response = df_for_response.dropna(subset=['id'])
+
+    # Convertir a lista de diccionarios
+    records = df_for_response.to_dict(orient="records")
+            
+    return records # FastAPI validará cada diccionario en 'records' contra ProductResponse
 
 @router.get("/{product_id}", response_model=ProductResponse)
 async def read_product(
@@ -221,9 +271,9 @@ async def read_product_by_code(
 
 
 @router.put("/{product_id}", response_model=ProductResponse)
-async def update_product_details( # No actualiza stock aquí, solo detalles
+async def update_product_details(
     product_id: int,
-    product_in: ProductUpdate,
+    product_in: ProductUpdate, # Ahora ProductUpdate puede recibir is_active
     current_user: Dict[str, Any] = Depends(get_admin_or_support_user)
 ):
     inventory_df = load_df(INVENTORY_FILE, columns=INVENTORY_COLUMNS)
@@ -233,21 +283,17 @@ async def update_product_details( # No actualiza stock aquí, solo detalles
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Producto no encontrado")
 
     idx = product_index[0]
-    update_data = product_in.dict(exclude_unset=True)
-    
-    # Si el código se intenta cambiar, verificar que no exista ya (aunque el modelo no lo permite ahora)
-    # if "code" in update_data and update_data["code"] != inventory_df.loc[idx, "code"]:
-    #     if not inventory_df[inventory_df["code"] == update_data["code"]].empty:
-    #         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya existe otro producto con el nuevo código.")
+    update_data = product_in.dict(exclude_unset=True) # ¡Esto ya debería incluir is_active si se envía!
 
     for key, value in update_data.items():
-        inventory_df.loc[idx, key] = value
-    
+        if key in inventory_df.columns: # Asegurarse que la columna existe
+            inventory_df.loc[idx, key] = value
+
     inventory_df.loc[idx, "last_updated"] = datetime.now()
     inventory_df.loc[idx, "updated_by_user_id"] = current_user["id"]
-    
+
     save_df(inventory_df, INVENTORY_FILE)
-    check_and_send_low_stock_alerts() # Si cambia el umbral o algo
+    # ... (resto de la función como estaba) ...
     return inventory_df.loc[idx].to_dict()
 
 

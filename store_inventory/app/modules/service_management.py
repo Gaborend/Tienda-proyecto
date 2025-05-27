@@ -96,9 +96,10 @@ async def create_service(
 
 @router.get("/", response_model=List[ServiceResponse])
 async def read_services(
-    skip: int = 0,
-    limit: int = 100,
-    active_only: bool = Query(True, description="Filtrar solo servicios activos"),
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1),
+    # Cambiamos el default a None para que sea más explícito que si no se pasa, no se filtra.
+    active_only: Optional[bool] = Query(None, description="Filtrar por estado activo (true/false). Si no se envía, no se filtra."),
     search: Optional[str] = Query(None, description="Buscar por código o descripción"),
     current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
@@ -106,17 +107,44 @@ async def read_services(
     if services_df.empty:
         return []
 
-    if active_only:
-        services_df = services_df[services_df["is_active"] == True]
+    # Asegurarse que la columna is_active sea booleana para el filtrado
+    if 'is_active' in services_df.columns:
+        # Intentar convertir a booleano de forma segura.
+        # Esto ayuda si los valores en el CSV son strings como "True", "False", "TRUE", "FALSE", etc.
+        # o números 1, 0.
+        services_df['is_active'] = services_df['is_active'].apply(
+            lambda x: str(x).strip().lower() == 'true' or str(x) == '1' if pd.notna(x) else None
+        ).astype(bool) # Convertir a tipo booleano de Pandas, NaN/None se convertirán a False si no se manejan antes.
+                       # O mejor, manejar None explícitamente si la columna puede tener vacíos para is_active
+                       # Para is_active, usualmente es obligatorio, así que debería ser True o False.
+
+    # Filtrado por active_only
+    if active_only is not None: # Solo filtrar si el parámetro active_only fue explícitamente enviado
+        services_df = services_df[services_df["is_active"] == active_only]
     
     if search:
         search_lower = search.lower()
-        services_df = services_df[
-            services_df["code"].str.lower().str.contains(search_lower, na=False) |
-            services_df["description"].str.lower().str.contains(search_lower, na=False)
-        ]
+        conditions = pd.Series([False] * len(services_df), index=services_df.index)
+        if 'code' in services_df.columns:
+            conditions = conditions | services_df["code"].astype(str).str.lower().str.contains(search_lower, na=False)
+        if 'description' in services_df.columns:
+            conditions = conditions | services_df["description"].astype(str).str.lower().str.contains(search_lower, na=False)
+        services_df = services_df[conditions]
             
-    return services_df.iloc[skip : skip + limit].to_dict(orient="records")
+    paginated_df = services_df.iloc[skip : skip + limit]
+
+    # Sanitización de datos (importante si tienes NaNs o NaTs en otros campos opcionales o de fecha)
+    df_for_response = paginated_df.copy()
+    df_for_response = df_for_response.replace({pd.NaT: None, float('nan'): None, pd.NA: None})
+    
+    date_columns = ['created_at', 'updated_at'] # Asegúrate que estos son los nombres de tus columnas de fecha
+    for date_col in date_columns:
+        if date_col in df_for_response.columns:
+            df_for_response[date_col] = pd.to_datetime(df_for_response[date_col], errors='coerce')
+            df_for_response[date_col] = df_for_response[date_col].replace({pd.NaT: None})
+            
+    records = df_for_response.to_dict(orient="records")
+    return records
 
 @router.get("/{service_id}", response_model=ServiceResponse)
 async def read_service(

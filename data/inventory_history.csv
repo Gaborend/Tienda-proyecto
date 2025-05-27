@@ -19,3 +19,9 @@ id,product_id,product_code,quantity_changed,new_quantity,movement_type,notes,use
 18,11,XY001,-2,38,venta,Venta asociada a factura ID: INV-4,1,2025-05-24 20:57:14.397805
 19,11,XY001,2,40,cancelacion_venta,Cancelación de venta ID: INV-4,1,2025-05-24 21:07:21.907036
 20,2,SOM001,-4,26,venta,Venta asociada a factura ID: INV-6,1,2025-05-25 05:36:46.913839
+21,12,LP003,50,50,creacion_producto,Registro inicial de producto,1,2025-05-26 17:05:44.930393
+22,13,PP001,20,20,creacion_producto,Registro inicial de producto,1,2025-05-26 18:58:36.522382
+23,13,PP001,5,25,ajuste_stock_aumento,Razón: compra de unidades. Notas: ,1,2025-05-26 19:18:27.303230
+24,13,PP001,-5,20,ajuste_stock_reduccion,Razón: venta. Notas: perdida por humedad,1,2025-05-26 19:19:37.524475
+25,14,32323,232,232,creacion_producto,Registro inicial de producto,1,2025-05-26 19:22:07.175960
+26,1,LIP001,5,55,ajuste_stock_aumento,Razón: mottivo. Notas: ,1,2025-05-27 01:07:08.565695

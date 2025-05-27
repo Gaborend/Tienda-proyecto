@@ -10,4 +10,5 @@
     "apply_iva_by_default": false,
     "iva_percentage": 19.0,
     "low_stock_threshold": 5
+     
 }

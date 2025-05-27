@@ -5,19 +5,23 @@ import DashboardPage from './pages/DashboardPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminPage from './pages/AdminPage';
 import CustomersPage from './pages/CustomersPage';
+import InventoryPage from './pages/InventoryPage';
+import ServicesPage from './pages/ServicesPage';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
       <Routes>
+        {/* Rutas Públicas */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<LoginPage />} /> 
         
+        {/* Rutas Protegidas */}
         <Route 
           path="/dashboard" 
           element={
-            <ProtectedRoute>
+            <ProtectedRoute> {/* Requiere solo estar logueado */}
               <DashboardPage />
             </ProtectedRoute>
           } 
@@ -30,18 +34,32 @@ function App() {
             </ProtectedRoute>
           } 
         />
-
-        {/* <<<--- RUTA MODIFICADA PARA CLIENTES --- >>> */}
         <Route 
           path="/customers" 
           element={
-            <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}> {/* AÑADIDO 'caja' */}
+            <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}>
               <CustomersPage />
             </ProtectedRoute>
           } 
         />
-        {/* <<<--- FIN RUTA MODIFICADA --- >>> */}
-
+        {/* --- RUTAS ACTUALIZADAS --- */}
+        <Route 
+          path="/inventory" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}> {/* AÑADIDO 'caja' */}
+              <InventoryPage />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/services" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'soporte', 'caja']}> {/* AÑADIDO 'caja' */}
+              <ServicesPage />
+            </ProtectedRoute>
+          } 
+        />
+        {/* --- FIN RUTAS ACTUALIZADAS --- */}
       </Routes>
     </div>
   );

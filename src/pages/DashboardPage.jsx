@@ -12,57 +12,63 @@ function DashboardPage() {
   const basicUser = authService.getCurrentUser();
 
   useEffect(() => {
-    const fetchUserDetails = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const data = await configService.getMe();
-        setCurrentUserDetails(data);
-      } catch (err) {
-        setError('No se pudieron cargar los detalles completos del usuario.');
-        console.error("Error en DashboardPage:", err);
-        if (!basicUser) {
-            authService.logout();
-            navigate('/login');
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (basicUser && basicUser.userId) {
+    const token = authService.getToken(); // Verificar token primero
+    if (token && basicUser && basicUser.userId) {
+        const fetchUserDetails = async () => {
+            setLoading(true);
+            setError('');
+            try {
+                const data = await configService.getMe();
+                setCurrentUserDetails(data);
+            } catch (err) {
+                setError('No se pudieron cargar los detalles completos del usuario.');
+                console.error("Error en DashboardPage al cargar detalles:", err);
+                // Si falla la carga de detalles pero hay token, podríamos quedarnos o redirigir
+                // Por ahora, solo mostramos el error.
+            } finally {
+                setLoading(false);
+            }
+        };
         fetchUserDetails();
-    } else {
-        console.log("No hay usuario básico en Dashboard, redirigiendo a login.");
-        authService.logout();
+    } else if (token) {
+        // Hay token pero basicUser es problemático o no está.
+        // Esto podría indicar que localStorage está corrupto o 'userData' no se guardó bien.
+        console.warn("Token presente pero datos de usuario básicos no disponibles en localStorage. Redirigiendo a login para re-autenticar.");
+        authService.logout(); // Limpiar estado inconsistente
         navigate('/login');
+        setLoading(false); // Detener carga
     }
-    
-  }, [navigate]);
+    else {
+        console.log("No hay token en Dashboard, redirigiendo a login.");
+        authService.logout(); 
+        navigate('/login');
+        setLoading(false); // Detener carga
+    }
+  }, [navigate]); // basicUser no es una buena dependencia aquí porque su referencia podría cambiar causando re-ejecuciones.
+                  // La lógica ahora se basa más en el token y la carga inicial.
 
   const handleLogout = () => {
     authService.logout();
     navigate('/login');
   };
 
-  // <<< --- LÓGICA DE PERMISOS AJUSTADA --- >>>
+  // Permisos para enlaces
   const canAccessAdminSettings = basicUser && ['admin', 'soporte'].includes(basicUser.role);
   const canAccessCustomersPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
+  // --- PERMISOS ACTUALIZADOS ---
+  const canAccessInventoryPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
+  const canAccessServicesPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
+  // --- FIN PERMISOS ACTUALIZADOS ---
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       <h2>¡Bienvenido a NoxSkin!</h2>
       
-      {loading && <p>Cargando tu información...</p>}
+      {loading && !currentUserDetails && <p>Cargando tu información...</p>} {/* Mostrar solo si realmente está cargando detalles */}
       {error && <p style={{ color: 'red' }}>{error}</p>}
 
       {currentUserDetails ? (
-        <div style={{ 
-            border: '1px solid #555', 
-            padding: '15px', 
-            marginBottom: '20px', 
-            borderRadius: '5px'
-        }}>
+        <div style={{ border: '1px solid #555', padding: '15px', marginBottom: '20px', borderRadius: '5px' }}>
           <h3>Tu Perfil:</h3>
           <p><strong>Usuario:</strong> {currentUserDetails.username}</p>
           <p><strong>Nombre Completo:</strong> {currentUserDetails.full_name}</p>
@@ -77,82 +83,49 @@ function DashboardPage() {
             <p>Rol: {basicUser.role}</p>
           </div>
       ) : !loading && !error ? (
-         <p>No se pudo cargar la información del usuario.</p>
+         <p>No se pudo cargar la información del usuario. Intenta recargar o volver a iniciar sesión.</p>
       ) : null }
 
       <hr style={{ borderColor: '#444' }}/>
 
       <h3>Accesos Rápidos:</h3>
-      {/* Enlace a Configuración y Administración (solo admin/soporte) */}
       {canAccessAdminSettings && (
           <p>
-            <Link 
-                to="/admin-settings" 
-                style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}
-            >
+            <Link to="/admin-settings" style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
                 Ir a Configuración y Administración ⚙️
             </Link>
           </p>
       )}
-
-      {/* Enlace a Gestionar Clientes (admin, soporte, caja) */}
       {canAccessCustomersPage && (
           <p>
-            <Link 
-                to="/customers" 
-                style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}
-            >
+            <Link to="/customers" style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
                 Gestionar Clientes 👥
             </Link>
           </p>
       )}
-      
-      {/* Aquí podrías añadir más enlaces a otros módulos específicos para admin/soporte si es necesario */}
-      {/*
-      {canAccessAdminSettings && ( // Reutilizando la condición si los permisos son los mismos
-          <>
-            <p>
-              <Link 
-                  to="/inventory" 
-                  style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}
-              >
-                  Gestionar Inventario 📦
-              </Link>
-            </p>
-          </>
+      {/* --- ENLACES ACTUALIZADOS --- */}
+      {canAccessInventoryPage && ( 
+          <p>
+            <Link to="/inventory" style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
+                Gestionar Inventario 📦
+            </Link>
+          </p>
       )}
-      */}
-      
-      {/* Enlaces para otros roles, como 'caja', podrían ir aquí si no están cubiertos arriba */}
-      {/* Por ejemplo, si un 'caja' puede facturar pero no ver admin/clientes (ya cubierto arriba):
-      {basicUser && basicUser.role === 'caja' && !canAccessCustomersPage && ( // Ejemplo de condición más específica si fuera necesario
-        <p>
-          <Link 
-              to="/billing" 
-              style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}
-          >
-              Crear Factura 🧾
-          </Link>
-        </p>
+      {canAccessServicesPage && ( 
+          <p>
+            <Link to="/services" style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}>
+                Gestionar Servicios 💄
+            </Link>
+          </p>
       )}
-      */}
-
+      {/* --- FIN ENLACES ACTUALIZADOS --- */}
+      
       <button 
           onClick={handleLogout} 
-          style={{ 
-              marginTop: '30px', 
-              padding: '10px 20px', 
-              cursor: 'pointer', 
-              backgroundColor: '#dc3545', 
-              color: 'white', 
-              border: 'none', 
-              borderRadius: '5px',
-              fontSize: '16px'
-          }}
+          style={{ marginTop: '30px', padding: '10px 20px', cursor: 'pointer', backgroundColor: '#dc3545', color: 'white', border: 'none', borderRadius: '5px', fontSize: '16px' }}
       >
           Cerrar Sesión
       </button>
-
     </div>
   );
 }

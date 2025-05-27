@@ -253,21 +253,32 @@ async def read_sales(
     status: Optional[str] = Query(None, pattern="^(completed|cancelled)$"),
     current_user: Dict[str, Any] = Depends(get_current_active_user) 
 ):
-    sales_df = load_df(SALES_FILE, columns=SALES_COLUMNS)
+    sales_df = load_df(SALES_FILE, columns=SALES_COLUMNS) # Asegúrate que SALES_FILE y SALES_COLUMNS estén definidos y accesibles
     if sales_df.empty:
         return []
 
     # Asegurar que las columnas de fecha sean del tipo datetime
-    if not pd.api.types.is_datetime64_any_dtype(sales_df['date']):
+    if 'date' in sales_df.columns and not pd.api.types.is_datetime64_any_dtype(sales_df['date']):
         sales_df['date'] = pd.to_datetime(sales_df['date'])
+    
     if 'cancellation_date' in sales_df.columns and not pd.api.types.is_datetime64_any_dtype(sales_df['cancellation_date']):
-        # Convertir a datetime, los NaT (Not a Time) se manejarán más adelante
         sales_df['cancellation_date'] = pd.to_datetime(sales_df['cancellation_date'], errors='coerce')
 
     # Aplicación de filtros
     if invoice_number:
-        sales_df = sales_df[sales_df["invoice_number"].str.contains(invoice_number, case=False, na=False)]
-    if customer_id:
+        # --- CAMBIO AQUÍ ---
+        # Antes: sales_df = sales_df[sales_df["invoice_number"].str.contains(invoice_number, case=False, na=False)]
+        # Ahora (coincidencia exacta, sensible a mayúsculas/minúsculas):
+        sales_df = sales_df[sales_df["invoice_number"] == invoice_number]
+        # -------------------
+
+    if customer_id is not None: # Es buena práctica chequear 'is not None' para parámetros opcionales
+        # Para mayor robustez con tipos de datos en el CSV:
+        if "customer_id" in sales_df.columns:
+            sales_df['customer_id'] = pd.to_numeric(sales_df['customer_id'], errors='coerce')
+            # Opcional: si quieres ser estricto y solo comparar con enteros no NaN:
+            # sales_df = sales_df.dropna(subset=['customer_id'])
+            # sales_df['customer_id'] = sales_df['customer_id'].astype(int) # O pd.Int64Dtype()
         sales_df = sales_df[sales_df["customer_id"] == customer_id]
     
     if product_id is not None:
@@ -285,12 +296,20 @@ async def read_sales(
         sales_df = sales_df[sales_df["items"].apply(lambda x: check_product_in_items(x, product_id))]
         
     if start_date:
-        sales_df = sales_df[sales_df["date"] >= start_date]
+        # Asegurar que la columna 'date' del DataFrame sea solo fecha para la comparación si start_date es solo fecha
+        sales_df_date_to_compare = sales_df['date'].dt.tz_localize(None).dt.normalize() if sales_df['date'].dt.tz is not None else sales_df['date'].dt.normalize()
+        query_start_date = pd.to_datetime(start_date).normalize()
+        sales_df = sales_df[sales_df_date_to_compare >= query_start_date]
+
     if end_date:
         # Ajustar end_date para incluir todo el día
-        if end_date.hour == 0 and end_date.minute == 0 and end_date.second == 0:
-            end_date = end_date.replace(hour=23, minute=59, second=59)
-        sales_df = sales_df[sales_df["date"] <= end_date]
+        query_end_date = pd.to_datetime(end_date)
+        if query_end_date.hour == 0 and query_end_date.minute == 0 and query_end_date.second == 0:
+            query_end_date = query_end_date.replace(hour=23, minute=59, second=59, microsecond=999999)
+        
+        sales_df_date_to_compare = sales_df['date'].dt.tz_localize(None) if sales_df['date'].dt.tz is not None else sales_df['date']
+        sales_df = sales_df[sales_df_date_to_compare <= query_end_date]
+
     if payment_method:
         sales_df = sales_df[sales_df["payment_method"].str.lower() == payment_method.lower()]
     if status:
@@ -303,36 +322,29 @@ async def read_sales(
         row_dict = row.to_dict()
         
         # Convertir NaN a None para campos opcionales
-        if pd.isna(row_dict.get("cancellation_reason")):
-            row_dict["cancellation_reason"] = None
-        if pd.isna(row_dict.get("cancelled_by_user_id")):
-            row_dict["cancelled_by_user_id"] = None
-        # Para cancellation_date, pd.to_datetime con errors='coerce' ya lo convierte a NaT si es inválido o vacío.
-        # Pydantic puede manejar NaT para campos Optional[datetime] asignándoles None, pero es más explícito.
-        if pd.isna(row_dict.get("cancellation_date")):
-            row_dict["cancellation_date"] = None
-        if pd.isna(row_dict.get("discount_percentage")): # Este es Optional[float] en SaleResponse
-            row_dict["discount_percentage"] = None
-        if pd.isna(row_dict.get("iva_percentage_used")): # Este es Optional[float] en SaleResponse
-            row_dict["iva_percentage_used"] = None
+        for col in ["cancellation_reason", "cancelled_by_user_id", "cancellation_date", "discount_percentage", "iva_percentage_used"]:
+            if col in row_dict and pd.isna(row_dict[col]):
+                row_dict[col] = None
         
-            
         try:
-            items_list_obj = json.loads(row_dict["items"])
-            # Asegurar que cada item tenga los campos esperados por SaleResponseItem
-            # BillableItemBase (padre de SaleResponseItem) tiene description y unit_price no opcionales
-            # Si vienen de `processed_items` en `create_sale`, ya los tienen.
-            row_dict["items"] = [SaleResponseItem(**item) for item in items_list_obj]
-        except (json.JSONDecodeError, TypeError):
-             row_dict["items"] = [] # Si hay error al parsear, lista vacía de items
+            items_input = row_dict.get("items") # Obtener el valor de 'items'
+            if isinstance(items_input, str): # Verificar si es un string JSON
+                 items_list_obj = json.loads(items_input)
+                 row_dict["items"] = [SaleResponseItem(**item) for item in items_list_obj] # Asignar la lista de objetos Pydantic
+            elif isinstance(items_input, list): # Si ya es una lista (por ejemplo, de una ejecución anterior o carga directa)
+                 # Asegurar que los elementos de la lista son dicts antes de pasarlos a SaleResponseItem
+                 row_dict["items"] = [SaleResponseItem(**item) if isinstance(item, dict) else item for item in items_input]
+            else:
+                 row_dict["items"] = [] # Default a lista vacía si no es string ni lista
+        except (json.JSONDecodeError, TypeError) as e:
+            print(f"Warning: Could not parse items for sale ID {row_dict.get('id', 'N/A')}. Error: {e}. Items: {row_dict.get('items')}")
+            row_dict["items"] = [] 
 
         try:
             results.append(SaleResponse(**row_dict))
         except Exception as e:
-            print(f"Error al crear SaleResponse para la fila: {row_dict}")
+            print(f"Error al crear SaleResponse para la fila: {row_dict.get('id', 'N/A')}")
             print(f"Excepción: {e}")
-            # Podrías decidir continuar o relanzar la excepción dependiendo de cómo quieras manejar errores aquí
-            # Por ahora, solo imprimimos y continuamos para no detener toda la lista por un mal registro
             continue 
             
     return results

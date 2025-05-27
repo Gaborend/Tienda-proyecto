@@ -1,15 +1,17 @@
 id,code,description,brand,quantity,cost_value,sale_value,date_added,last_updated,is_active,category,low_stock_alert_sent,created_by_user_id,updated_by_user_id
-1,LIP001,Labial Rojo Intenso Mate,BellezaTotal,55,6.0,12.99,2025-05-24 04:29:53.297626,2025-05-27 01:52:53.501602,True,Labiales,False,1,1
+1,LIP001,Labial Rojo Intenso Mate,BellezaTotal,44,6.0,12.99,2025-05-24 04:29:53.297626,2025-05-27 12:35:45.514344,True,Labiales,False,1,1
 2,SOM001,Sombra de Ojos Paleta Nude,CosmeticosEstrella,26,8.0,20.0,2025-05-24 05:15:00.754471,2025-05-27 01:54:26.402448,True,Ojos,False,1,1
-3,BAS001,Base de Maquillaje Fluida Larga Duración - Tono Medio,PielPerfecta,30,12.0,25.99,2025-05-24 05:18:28.574893,2025-05-24 05:18:28.574893,True,Bases,False,1,1
+3,BAS001,Base de Maquillaje Fluida Larga Duración - Tono Medio,PielPerfecta,28,12.0,25.99,2025-05-24 05:18:28.574893,2025-05-27 16:32:28.393403,True,Bases,False,1,1
 4,SOM002,Paleta de Sombras 'Atardecer Dorado' - 12 Colores,OjosDeEstrella,20,15.5,32.0,2025-05-24 05:18:59.558279,2025-05-24 05:18:59.558279,True,Ojos,False,1,1
 5,LIP002,Labial Líquido Indeleble Mate - Rojo Pasión,BocaSeductora,45,7.0,15.99,2025-05-24 05:19:36.017439,2025-05-24 05:19:36.017439,True,Labiales,False,1,1
 6,DEL001,Delineador de Ojos Negro Intenso - Lápiz Retráctil,MiradaImpacto,60,4.25,9.5,2025-05-24 05:19:49.478441,2025-05-26 18:53:05.737749,True,Ojos,False,1,1
 7,POL001,Polvo Compacto Translúcido - Acabado Natural,PielPerfecta,35,9.0,21.0,2025-05-24 05:20:07.143738,2025-05-26 18:53:49.617447,True,Polvos,False,1,1
 8,MAS001,Máscara de Pestañas Volumen Extremo - Negro,OjosDeEstrella,55,6.5,14.75,2025-05-24 05:20:18.024360,2025-05-26 18:53:52.362875,True,Ojos,False,1,1
 9,RUB001,Rubor en Crema Larga Duración - Tono Durazno,MejillasRadiantes,28,8.75,18.5,2025-05-24 05:20:24.925816,2025-05-26 18:53:56.256013,True,Rubores,False,1,1
-10,PRI001,Primer Facial Minimizador de Poros ,PielPerfecta,55,11.0,24.0,2025-05-24 05:20:49.569165,2025-05-26 18:54:00.883789,True,Primers,False,1,1
-11,XY001,Delineador resiste al agua,gato,40,8.0,20.0,2025-05-24 20:08:03.795293,2025-05-26 18:54:06.846329,True,PielPerfecta,False,1,1
+10,PRI001,Primer Facial Minimizador de Poros ,PielPerfecta,54,11.0,24.0,2025-05-24 05:20:49.569165,2025-05-27 11:01:57.534209,True,Primers,False,1,1
+11,XY001,Delineador resiste al agua,gato,38,8.0,20.0,2025-05-24 20:08:03.795293,2025-05-27 12:26:34.915783,True,PielPerfecta,False,1,1
 12,LP003,Producto1,Marca1,50,30000.0,80000.0,2025-05-26 17:05:44.886525,2025-05-26 18:52:46.014662,True,categoria2,False,1,1
 13,PP001,descripcio1,marca1,20,20000.0,500000.0,2025-05-26 18:58:36.482296,2025-05-26 19:20:30.548713,True,categoria1,False,1,1
 14,32323,productooo,fdgd,232,2424.0,242.0,2025-05-26 19:22:07.165131,2025-05-26 19:22:07.165131,True,fdfd,False,1,1
+15,	LIP001,descri,sfsf,3223,2323.0,232.0,2025-05-27 02:15:00.230488,2025-05-27 02:15:17.022531,False,fsf,False,1,1
+16,LIP003,Sombra de Ojos Paleta Nude 22,221,22,222.0,400.0,2025-05-27 02:41:06.110382,2025-05-27 02:41:14.407312,False,,False,1,1

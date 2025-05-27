@@ -25,3 +25,25 @@ id,product_id,product_code,quantity_changed,new_quantity,movement_type,notes,use
 24,13,PP001,-5,20,ajuste_stock_reduccion,Razón: venta. Notas: perdida por humedad,1,2025-05-26 19:19:37.524475
 25,14,32323,232,232,creacion_producto,Registro inicial de producto,1,2025-05-26 19:22:07.175960
 26,1,LIP001,5,55,ajuste_stock_aumento,Razón: mottivo. Notas: ,1,2025-05-27 01:07:08.565695
+27,15,	LIP001,3223,3223,creacion_producto,Registro inicial de producto,1,2025-05-27 02:15:00.247639
+28,16,LIP003,22,22,creacion_producto,Registro inicial de producto,1,2025-05-27 02:41:06.122557
+29,1,LIP001,-2,53,venta,Venta asociada a factura ID: INV-9,4,2025-05-27 10:40:04.988008
+30,3,BAS001,-1,29,venta,Venta asociada a factura ID: INV-9,4,2025-05-27 10:40:05.056485
+31,1,LIP001,-1,52,venta,Venta asociada a factura ID: INV-11,1,2025-05-27 10:45:19.991141
+32,1,LIP001,-1,51,venta,Venta asociada a factura ID: INV-12,1,2025-05-27 10:51:42.838185
+33,1,LIP001,-1,50,venta,Venta asociada a factura ID: INV-13,1,2025-05-27 10:57:56.905804
+34,1,LIP001,-1,49,venta,Venta asociada a factura ID: INV-14,1,2025-05-27 11:01:57.488918
+35,10,PRI001,-1,54,venta,Venta asociada a factura ID: INV-14,1,2025-05-27 11:01:57.552973
+36,11,XY001,-1,39,venta,Venta asociada a factura ID: INV-14,1,2025-05-27 11:01:57.603902
+37,1,LIP001,-2,47,venta,Venta asociada a factura ID: INV-15,1,2025-05-27 11:07:14.974753
+38,11,XY001,-1,38,venta,Venta asociada a factura ID: INV-15,1,2025-05-27 11:07:15.052671
+39,3,BAS001,-1,28,venta,Venta asociada a factura ID: INV-15,1,2025-05-27 11:07:15.110390
+40,1,LIP001,-1,46,venta,Venta asociada a factura ID: INV-16,1,2025-05-27 11:11:44.227532
+41,1,LIP001,-1,45,venta,Venta asociada a factura ID: INV-17,4,2025-05-27 11:17:47.619641
+42,1,LIP001,-1,44,venta,Venta asociada a factura ID: INV-18,1,2025-05-27 11:19:30.874250
+43,11,XY001,-1,37,venta,Venta asociada a factura ID: INV-19,1,2025-05-27 11:20:19.891657
+44,11,XY001,-1,36,venta,Venta asociada a factura ID: INV-20,1,2025-05-27 11:33:42.383327
+45,11,XY001,1,37,cancelacion_venta,Cancelación de venta ID: INV-20,1,2025-05-27 11:35:56.301006
+46,1,LIP001,-1,43,venta,Venta asociada a factura ID: INV-21,1,2025-05-27 11:37:08.439909
+47,11,XY001,1,38,cancelacion_venta,Cancelación de venta ID: INV-19,1,2025-05-27 12:26:34.928742
+48,1,LIP001,1,44,cancelacion_venta,Cancelación de venta ID: INV-21,1,2025-05-27 12:35:45.520363

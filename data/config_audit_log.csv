@@ -18,4 +18,5 @@ id,timestamp,user_id_performing_action,username_performing_action,action_type,ta
 17,2025-05-26T13:05:31.099232+00:00,2,admin,USER_UPDATED,user,7.0,"{""full_name"": {""old"": ""Carlos zapata zz"", ""new"": ""Carlos zapata zzz""}}"
 18,2025-05-26T13:06:11.975453+00:00,2,admin,USER_UPDATED,user,7.0,"{""full_name"": {""old"": ""Carlos zapata zzz"", ""new"": ""Carlos zapata zzzz""}}"
 19,2025-05-26T16:20:01.575687+00:00,1,soporte,USER_UPDATED,user,7.0,"{""full_name"": {""old"": ""Carlos zapata zzzz"", ""new"": ""Carlos zapata zzzzzz""}}"
-20,2025-05-26T16:26:29.736319+00:00,1,soporte,USER_UPDATED,user,7,"{""full_name"": {""old"": ""Carlos zapata zzzzzz"", ""new"": ""Carlos zapata zzzzz""}}"
+20,2025-05-26T16:26:29.736319+00:00,1,soporte,USER_UPDATED,user,7.0,"{""full_name"": {""old"": ""Carlos zapata zzzzzz"", ""new"": ""Carlos zapata zzzzz""}}"
+21,2025-05-27T16:19:07.305363+00:00,1,soporte,STORE_SETTINGS_UPDATED,store_config,,"{""store_name"": {""old"": ""Tienda de Maquillaje"", ""new"": ""NoxSkin""}}"

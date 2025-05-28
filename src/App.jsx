@@ -10,7 +10,8 @@ import ServicesPage from './pages/ServicesPage';
 import BillingPage from './pages/BillingPage';
 import SalesHistoryPage from './pages/SalesHistoryPage';
 import CashBalancePage from './pages/CashBalancePage';
-import CashBalanceHistoryPage from './pages/CashBalanceHistoryPage'; // <-- IMPORTACIÓN CORREGIDA/AÑADIDA
+import CashBalanceHistoryPage from './pages/CashBalanceHistoryPage';
+import ReportsPage from './pages/ReportsPage'; // <-- IMPORTAR ReportsPage
 
 import './App.css';
 
@@ -91,7 +92,16 @@ function App() {
           path="/cash-balance-history" 
           element={
             <ProtectedRoute allowedRoles={['admin', 'soporte']}> 
-              <CashBalanceHistoryPage /> {/* Ahora CashBalanceHistoryPage está definido */}
+              <CashBalanceHistoryPage />
+            </ProtectedRoute>
+          } 
+        />
+        {/* --- NUEVA RUTA PARA REPORTES --- */}
+        <Route 
+          path="/reports" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'soporte']}> {/* Ajusta roles según necesidad */}
+              <ReportsPage />
             </ProtectedRoute>
           } 
         />

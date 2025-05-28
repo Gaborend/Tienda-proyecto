@@ -55,11 +55,12 @@ function DashboardPage() {
   const canAccessBillingPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
   const canAccessSalesHistory = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
   const canAccessCashBalance = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
-  const canAccessCashBalanceHistory = basicUser && ['admin', 'soporte'].includes(basicUser.role); // Permiso para historial de cuadres
+  const canAccessCashBalanceHistory = basicUser && ['admin', 'soporte'].includes(basicUser.role);
+  const canAccessReports = basicUser && ['admin', 'soporte'].includes(basicUser.role); // <-- NUEVO PERMISO
 
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif' }}>
-      <h2>¡Bienvenido a NoxSkin!</h2> {/* Asumo que el nombre de la tienda es NoxSkin por el contexto anterior */}
+      <h2>¡Bienvenido a NoxSkin!</h2>
       
       {loading && !currentUserDetails && <p>Cargando tu información...</p>}
       {error && <p style={{ color: 'red' }}>{error}</p>}
@@ -144,7 +145,6 @@ function DashboardPage() {
             </Link>
           </p>
       )}
-      {/* --- NUEVO ENLACE PARA HISTORIAL DE CUADRES DE CAJA --- */}
       {canAccessCashBalanceHistory && (
           <p>
             <Link 
@@ -152,6 +152,17 @@ function DashboardPage() {
                 style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}
             >
                 Historial de Cuadres de Caja 📊
+            </Link>
+          </p>
+      )}
+      {/* --- NUEVO ENLACE PARA REPORTES --- */}
+      {canAccessReports && (
+          <p>
+            <Link 
+                to="/reports" 
+                style={{ textDecoration: 'none', color: '#61dafb', fontWeight: 'bold', display: 'block', marginBottom: '10px' }}
+            >
+                Reportes 📈
             </Link>
           </p>
       )}

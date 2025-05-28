@@ -6,7 +6,7 @@ import configService from '../services/configService';
 import authService from '../services/authService';
 import billingService from '../services/billingService';
 
-// Estilos Generales
+// Estilos
 const pageStyle = { padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '900px', margin: '0 auto' };
 const sectionStyle = { 
   marginBottom: '30px', padding: '20px', border: '1px solid #ccc', 
@@ -33,13 +33,12 @@ const itemsSubTableStyle = { width: '100%', marginTop: '5px', fontSize: '0.95em'
 const itemsSubThStyle = { backgroundColor: '#fafafa', padding: '4px', textAlign: 'left', borderBottom:'1px solid #eee' };
 const itemsSubTdStyle = { padding: '4px', borderBottom:'1px solid #f5f5f5' };
 
-// ESTILOS DE IMPRESIÓN PARA EL RESUMEN DE CUADRE DE CAJA (ÚLTIMA VERSIÓN MEJORADA)
 const printCashSummaryStyles = `
   @media print {
     html, body {
       width: 100%; height: auto !important; overflow: visible !important;
       background: #fff !important; margin: 0 !important; padding: 0 !important;
-      font-size: 9pt; /* Base font size for printing */
+      font-size: 9pt; 
       -webkit-print-color-adjust: exact; print-color-adjust: exact;
     }
     body * { visibility: hidden; }
@@ -48,7 +47,7 @@ const printCashSummaryStyles = `
     }
     .cash-summary-printable {
       position: static !important; width: 100% !important; max-width: 100% !important;
-      margin: 0 auto !important; padding: 10mm 8mm 8mm 8mm; /* Page margins */
+      margin: 0 auto !important; padding: 10mm 8mm !important; 
       border: none !important; box-shadow: none !important;
       color: #000 !important; line-height: 1.3;
       overflow: visible !important; height: auto !important; max-height: none !important;
@@ -59,22 +58,28 @@ const printCashSummaryStyles = `
     .cash-summary-printable h3, .cash-summary-printable h4 {
       color: #000 !important; background: none !important;
       margin-top: 0.8em; margin-bottom: 0.4em;
-      page-break-after: avoid; word-wrap: break-word;
+      page-break-after: avoid; word-wrap: break-word; overflow-wrap: break-word;
     }
     .cash-summary-printable h1 { font-size: 16pt; text-align:center; }
     .cash-summary-printable h2 { font-size: 14pt; border-bottom: 1px solid #000; padding-bottom: 3px;}
     .cash-summary-printable h3 { font-size: 12pt; border-bottom: 1px dotted #000; padding-bottom: 2px;}
-    .cash-summary-printable .info-box-print p { margin: 2px 0; font-size: 9pt; word-wrap: break-word; }
-    .cash-summary-printable .info-box-print { border: 1px solid #aaa; padding: 8px; margin-bottom: 12px; }
+    .cash-summary-printable .info-box-print p { 
+        margin: 2px 0; font-size: 9pt; word-wrap: break-word; overflow-wrap: break-word;
+    }
+    .cash-summary-printable .info-box-print { 
+        border: 1px solid #aaa; padding: 8px; margin-bottom: 12px;
+    }
     .cash-summary-printable .calculation-row-print {
         display: flex; justify-content: space-between; padding: 4px 0;
         border-bottom: 1px dotted #888; font-size: 9pt;
     }
+    .cash-summary-printable .calculation-row-print span { 
+        word-break: break-word; overflow-wrap: break-word;
+    }
     .cash-summary-printable .calculation-row-print span:last-child {
         text-align: right; flex-shrink: 0; margin-left: 10px;
     }
-    .cash-summary-printable .calculation-row-print span:first-child { word-break: break-word; }
-    .cash-summary-printable .calculation-total-row-print { /* Apply this class to total rows if needed */
+    .cash-summary-printable .calculation-total-row-print {
         font-weight: bold; border-top: 1px solid #000;
         padding-top: 6px; margin-top: 6px;
     }
@@ -84,9 +89,11 @@ const printCashSummaryStyles = `
         padding: 3px 0; border-bottom: 1px dotted #ccc;
         display: flex; justify-content: space-between; flex-wrap: wrap;
     }
-    .cash-summary-printable li div { flex-grow: 1; word-break: break-word; }
+    .cash-summary-printable li > div:first-child { 
+        flex-grow: 1; word-break: break-word; overflow-wrap: break-word;
+    }
     .cash-summary-printable li em { font-style: italic; color: #333; margin-left:5px; white-space: nowrap;}
-    .cash-summary-printable p { word-wrap: break-word; margin: 4px 0; }
+    .cash-summary-printable p { word-wrap: break-word; overflow-wrap: break-word; margin: 4px 0; }
   }
 `;
 
@@ -131,26 +138,37 @@ function CashBalancePage() {
   });
 
   const currentUser = useMemo(() => authService.getCurrentUser(), []);
+  // Descomenta este log para verificar el usuario y rol al cargar la página:
+  // console.log("CashBalancePage - currentUser (al inicio del componente):", currentUser); 
+  
   const canOverrideInitialBalance = currentUser && ['admin', 'soporte'].includes(currentUser.role);
   const canReopenCashBalance = currentUser && ['admin', 'soporte'].includes(currentUser.role);
 
   const loadInitialPageData = useCallback(async () => {
+    // console.log("CashBalancePage: loadInitialPageData - Iniciando carga...");
     setLoading(true); setError('');
     try {
       const [recordResponse, configResponse] = await Promise.all([
         cashBalanceService.getTodaysCashRecord(),
         configService.getStoreSettings()
       ]);
+      // console.log("CashBalancePage: loadInitialPageData - recordResponse:", recordResponse);
+      // console.log("CashBalancePage: loadInitialPageData - configResponse:", configResponse);
+
       setTodayRecord(recordResponse); 
       setStoreConfig(configResponse);
+      
       if (!recordResponse || recordResponse.status !== 'open') {
           setExpenses([]); setCountedCash(''); setNotes('');
       }
     } catch (err) {
-      console.error("Error cargando datos iniciales:", err.response?.data || err.message || err);
+      console.error("CashBalancePage: Error en loadInitialPageData:", err.response?.data || err.message || err);
       setError("Error al cargar datos iniciales. Verifique la conexión o intente recargar.");
       setTodayRecord(null); setStoreConfig(null);
-    } finally { setLoading(false); }
+    } finally {
+      // console.log("CashBalancePage: loadInitialPageData - Finalizado.");
+      setLoading(false);
+    }
   }, []); 
 
   useEffect(() => { loadInitialPageData(); }, [loadInitialPageData]);
@@ -196,7 +214,7 @@ function CashBalancePage() {
         .reduce((sum, exp) => sum + parseFloat(exp.value || 0), 0);
       const profit = totalIncome - totalAllExpenses;
       const initialBalance = parseFloat(todayRecord.initial_balance); 
-      if (isNaN(initialBalance)) { return; }
+      if (isNaN(initialBalance)) { console.error("Balance inicial inválido en todayRecord:", todayRecord); return; }
       const cashSales = dailySalesSummary.cash;
       const expectedCash = initialBalance + cashSales - totalCashExpenses;
       const currentCountedCash = parseFloat(countedCash || 0);
@@ -279,13 +297,31 @@ function CashBalancePage() {
     } finally { setLoadingClose(false); }
   };
 
-  const handleReopenCashBalance = async () => {
-    if (!todayRecord || todayRecord.status !== 'closed' || 
-        (parseLocalDateFromString(todayRecord.date)?.toISOString().split('T')[0] !== new Date().toISOString().split('T')[0])
-    ) {
-      alert("Solo se puede reabrir un cuadre cerrado del día actual."); return;
+    const handleReopenCashBalance = async () => {
+    const clientCurrentDateString = new Date().toLocaleDateString('en-CA'); // Obtiene "YYYY-MM-DD" en la zona local del cliente
+
+    // Asegurarse de que todayRecord y todayRecord.date existen
+    if (!todayRecord || !todayRecord.date) {
+        alert("No hay un registro de cuadre cargado para reabrir.");
+        return;
     }
-    if (!window.confirm("¿Está seguro de que desea reabrir este cuadre de caja para correcciones? Esta acción puede afectar reportes previos si no se maneja con cuidado.")) return;
+
+    // todayRecord.date ya viene del backend como "YYYY-MM-DD"
+    const recordDateString = todayRecord.date; 
+
+    console.log("handleReopen - Fecha Cliente (YYYY-MM-DD):", clientCurrentDateString);
+    console.log("handleReopen - Fecha Registro (YYYY-MM-DD):", recordDateString);
+    console.log("handleReopen - Estado del Registro:", todayRecord.status);
+
+
+    if (todayRecord.status !== 'closed' || recordDateString !== clientCurrentDateString) {
+      alert("Solo se puede reabrir un cuadre cerrado del día actual.");
+      return;
+    }
+
+    if (!window.confirm("¿Está seguro de que desea reabrir este cuadre de caja para correcciones? Esta acción puede afectar reportes previos si no se maneja con cuidado.")) {
+        return;
+    }
 
     setLoadingReopen(true); setError(''); setSuccessMessage('');
     try {
@@ -304,9 +340,10 @@ function CashBalancePage() {
     } catch (err) {
         console.error("Error al reabrir cuadre de caja:", err.response?.data || err.message || err);
         setError(err.response?.data?.detail || err.message || "Error al intentar reabrir el cuadre.");
-    } finally { setLoadingReopen(false); }
+    } finally {
+        setLoadingReopen(false);
+    }
   };
-
   const handlePrintCashSummary = () => {
     window.print();
   };
@@ -355,7 +392,6 @@ function CashBalancePage() {
             <p>Fecha Apertura: <strong>{openingDateStr}</strong></p>
             <p>Estado: <strong style={{color: 'green'}}>ABIERTA</strong></p>
         </div>
-
         <div style={{marginBottom: '25px'}}>
             <h3 style={h3Style}>Resumen de Ventas del Día</h3>
             {loadingSales && <p>Cargando ventas...</p>}
@@ -398,7 +434,6 @@ function CashBalancePage() {
             )}
             {!loadingSales && detailedTodaysSales.length === 0 && <p style={{fontStyle:'italic', fontSize:'0.9em', marginTop:'10px'}}>No hay ventas registradas para este cuadre.</p>}
         </div>
-
         <div style={{marginBottom: '25px'}}>
             <h3 style={h3Style}>Registro de Egresos Diarios</h3>
             <div style={formRowStyle}>
@@ -451,7 +486,6 @@ function CashBalancePage() {
                 <strong>{calculatedTotals.totalExpenses.toFixed(2)}</strong>
             </div>
         </div>
-        
         <div style={{marginBottom: '25px'}}>
             <h3 style={h3Style}>Cierre de Caja</h3>
             <div style={{marginBottom:'15px'}}>
@@ -463,7 +497,6 @@ function CashBalancePage() {
                 <textarea id="notes" value={notes} onChange={e => setNotes(e.target.value)} rows="3" style={{...inputStyle, minHeight:'60px'}}></textarea>
             </div>
         </div>
-
         <div style={{marginBottom: '30px', padding:'20px', border:'1px dashed #007bff', borderRadius:'8px', backgroundColor:'#fff'}}>
             <h3 style={{...h2Style, fontSize:'1.3em', color:'#007bff', borderBottom:'none', paddingBottom:0}}>Cálculos del Cuadre</h3>
             <div style={calculationRowStyle}><span>(+) Base Inicial de Caja:</span> <span>{parseFloat(todayRecord.initial_balance).toFixed(2)}</span></div>
@@ -482,7 +515,6 @@ function CashBalancePage() {
             <div style={calculationRowStyle}><span>Utilidad Bruta del Día (Ingresos Totales - Egresos Totales):</span> <strong>{calculatedTotals.profit.toFixed(2)}</strong></div>
             <div style={calculationTotalRowStyle}><span>Dinero a Consignar (Ventas Efectivo - Egresos Efectivo):</span> <strong>{calculatedTotals.cashToConsign.toFixed(2)}</strong></div>
         </div>
-
         <button onClick={handleCloseCashBalance} disabled={loadingClose || loadingSales} style={{...buttonStyle, backgroundColor:'#28a745', width:'100%', padding:'15px', fontSize:'1.1em', marginRight:0}}>
             {loadingClose ? 'Cerrando Caja...' : (loadingSales ? 'Calculando ventas...' : 'Confirmar y Cerrar Caja')}
         </button>
@@ -494,7 +526,26 @@ function CashBalancePage() {
     if (!todayRecord || !todayRecord.date) return null;
     const closedRecordDateObj = parseLocalDateFromString(todayRecord.date);
     const closedRecordDateStr = closedRecordDateObj ? closedRecordDateObj.toLocaleDateString() : "Fecha inválida";
-    const isToday = new Date().toISOString().split('T')[0] === todayRecord.date;
+    let isToday = false;
+    const clientToday = new Date(); // Fecha y hora actual del cliente
+    clientToday.setHours(0, 0, 0, 0); // Normalizar al inicio del día (medianoche local)
+
+    if (closedRecordDateObj) { // Asegurarse que closedRecordDateObj no sea null
+        // closedRecordDateObj ya está normalizado a medianoche local por parseLocalDateFromString
+        isToday = clientToday.getTime() === closedRecordDateObj.getTime();
+    }
+
+     
+   
+    console.log("--- Debug renderClosedCashSummary ---");
+    console.log("Fecha Actual (Cliente String):", new Date().toISOString().split('T')[0]);
+    console.log("Fecha del Registro (todayRecord.date String):", todayRecord.date);
+    console.log("¿Es Hoy (isToday)?", isToday);
+    console.log("Usuario Actual (currentUser):", currentUser);
+    console.log("¿Puede Reabrir (canReopenCashBalance)?", canReopenCashBalance);
+    console.log("Estado del Registro (todayRecord.status):", todayRecord.status);
+    console.log("------------------------------------");
+    
 
     return (
       <div className="cash-summary-printable"> 
@@ -511,7 +562,6 @@ function CashBalancePage() {
           <div style={calculationRowStyle} className="calculation-row-print"><span>Ventas en Efectivo:</span> <strong>{todayRecord.cash_sales?.toFixed(2) ?? 'N/A'}</strong></div>
           <div style={calculationRowStyle} className="calculation-row-print"><span>Ventas con Tarjeta:</span> <strong>{todayRecord.card_sales?.toFixed(2) ?? 'N/A'}</strong></div>
           <div style={calculationRowStyle} className="calculation-row-print"><span>Ventas por Transferencia:</span> <strong>{todayRecord.transfer_sales?.toFixed(2) ?? 'N/A'}</strong></div>
-          
           <hr style={{margin:'15px 0'}}/>
           <h4 style={{color:'#333', fontSize:'1.1em', marginTop:'15px', marginBottom:'5px'}}>Egresos Registrados:</h4>
           {todayRecord.expenses_details && todayRecord.expenses_details.length > 0 ? (
@@ -526,10 +576,8 @@ function CashBalancePage() {
               </ul>
           ) : <p><em>No se registraron egresos.</em></p>}
           <div style={calculationTotalRowStyle} className="calculation-row-print"><span>Total Egresos Registrados:</span> <strong>{todayRecord.total_expenses_recorded?.toFixed(2) ?? 'N/A'}</strong></div>
-          
           <hr style={{margin:'15px 0'}}/>
           <div style={calculationRowStyle} className="calculation-row-print"><span>Utilidad del Día (Ingresos - Egresos):</span> <strong>{todayRecord.profit_of_the_day?.toFixed(2) ?? 'N/A'}</strong></div>
-          
           <hr style={{margin:'15px 0'}}/>
           <div style={calculationRowStyle} className="calculation-row-print"><span>Efectivo Esperado en Caja:</span> <strong>{todayRecord.expected_cash_in_box?.toFixed(2) ?? 'N/A'}</strong></div>
           <div style={calculationRowStyle} className="calculation-row-print"><span>Efectivo Físico Contado:</span> <strong>{todayRecord.counted_cash_physical?.toFixed(2) ?? 'N/A'}</strong></div>
@@ -540,10 +588,8 @@ function CashBalancePage() {
                   {todayRecord.difference != null && (todayRecord.difference > 0 ? ' (Sobrante)' : todayRecord.difference < 0 ? ' (Faltante)' : ' (Cuadre Exacto)')}
               </strong>
           </div>
-
           <hr style={{margin:'15px 0'}}/>
           <div style={calculationTotalRowStyle} className="calculation-row-print"><span>Dinero a Consignar (Efectivo):</span> <strong>{todayRecord.cash_to_consign?.toFixed(2) ?? 'N/A'}</strong></div>
-          
           {todayRecord.notes && <p style={{marginTop:'15px'}}><strong>Notas del Cierre:</strong> <em>{todayRecord.notes}</em></p>}
 
           <div style={{marginTop: '25px', textAlign:'center'}} className="no-print">
@@ -553,7 +599,7 @@ function CashBalancePage() {
               >
                   Imprimir Resumen
               </button>
-              {isToday && canReopenCashBalance && (
+              {isToday && canReopenCashBalance && todayRecord.status === 'closed' && (
                   <button 
                       onClick={handleReopenCashBalance} 
                       disabled={loadingReopen}
@@ -589,7 +635,7 @@ function CashBalancePage() {
         {!error && storeConfig && todayRecord && todayRecord.status === 'closed' && renderClosedCashSummary()}
         
         {!loading && !storeConfig && !error && (
-          <p style={errorStyle}>No se pudo cargar la configuración de la tienda...</p>
+          <p style={errorStyle}>No se pudo cargar la configuración de la tienda. Por favor, <button onClick={loadInitialPageData} style={{...buttonStyle, fontSize:'0.9em', padding:'5px 10px', backgroundColor:'#0069d9'}}>reintente</button> o contacte a soporte.</p>
         )}
       </div>
     </div>

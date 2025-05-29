@@ -154,7 +154,7 @@ const downloadInventoryMovementsReport = async (params = {}) => {
 
 /**
  * Obtiene el reporte de servicios realizados.
- * @param {object} params - Parámetros de filtro (start_date, end_date, service_id, customer_id)
+ * @param {object} params - Parámetros de filtro (start_date, end_date, service_id, customer_id, include_temporary)
  * @returns {Promise<Array>} Lista de items del reporte de servicios realizados.
  */
 const getServicesPerformedReport = async (params = {}) => {
@@ -181,7 +181,12 @@ const downloadServicesPerformedReport = async (params = {}) => {
         const queryParams = new URLSearchParams();
         for (const key in params) {
             if (params[key] !== '' && params[key] !== null && params[key] !== undefined) {
-                queryParams.append(key, params[key]);
+                // Para los booleanos como include_temporary, asegurarse de que se envíen correctamente
+                if (typeof params[key] === 'boolean') {
+                    queryParams.append(key, params[key].toString());
+                } else {
+                    queryParams.append(key, params[key]);
+                }
             }
         }
         const url = `${API_BASE_URL}/services-performed/export/excel?${queryParams.toString()}`;
@@ -222,6 +227,77 @@ const downloadServicesPerformedReport = async (params = {}) => {
     }
 };
 
+/**
+ * Obtiene el reporte de clientes frecuentes.
+ * @param {object} params - Parámetros de filtro (start_date, end_date, top_n, min_purchases)
+ * @returns {Promise<Array>} Lista de clientes frecuentes.
+ */
+const getFrequentCustomersReport = async (params = {}) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/frequent-customers`, { 
+      headers: getAuthHeaders(), 
+      params 
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error al obtener el reporte de clientes frecuentes:", error.response?.data || error.message);
+    throw error.response?.data || error;
+  }
+};
+
+/**
+ * Descarga el reporte de clientes frecuentes en formato Excel.
+ * @param {object} params - Parámetros de filtro.
+ * @returns {Promise<boolean>} True si la descarga se inició, o lanza error.
+ */
+const downloadFrequentCustomersReport = async (params = {}) => {
+    try {
+        const token = authService.getToken();
+        const queryParams = new URLSearchParams();
+        for (const key in params) {
+            if (params[key] !== '' && params[key] !== null && params[key] !== undefined) {
+                queryParams.append(key, params[key]);
+            }
+        }
+        const url = `${API_BASE_URL}/frequent-customers/export/excel?${queryParams.toString()}`;
+
+        const response = await axios.get(url, {
+            headers: { Authorization: `Bearer ${token}` },
+            responseType: 'blob',
+        });
+
+        const blob = new Blob([response.data], { type: response.headers['content-type'] || 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        
+        const contentDisposition = response.headers['content-disposition'];
+        let filename = `frequent_customers_report_${new Date().toISOString().split('T')[0]}.xlsx`;
+        if (contentDisposition) {
+            const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+            if (filenameMatch && filenameMatch.length === 2)
+                filename = filenameMatch[1];
+        }
+        
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+        return true;
+
+    } catch (error) {
+        console.error("Error al descargar el reporte de clientes frecuentes:", error.response?.data || error.message);
+        if (error.response && error.response.data instanceof Blob) {
+            const errText = await error.response.data.text();
+            try { const errJson = JSON.parse(errText); throw errJson; }
+            catch (parseError) { throw { detail: errText }; }
+        }
+        throw error.response?.data || error;
+    }
+};
+
+
 export default {
   getSalesSummaryReport,
   downloadSalesSummaryReport,
@@ -229,4 +305,6 @@ export default {
   downloadInventoryMovementsReport,
   getServicesPerformedReport,
   downloadServicesPerformedReport,
+  getFrequentCustomersReport,
+  downloadFrequentCustomersReport,
 };

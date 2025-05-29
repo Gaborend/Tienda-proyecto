@@ -79,7 +79,7 @@ function DashboardPage() {
 
   const headingStyle = { // Para "¡Bienvenido a NoxSkin!"
     textAlign: 'center', 
-    color: '#79cdf0',     // o cambiar a narjan #E67E22
+    color: 'rgb(255, 119, 0)',     // o cambiar a narjan rgb(255, 119, 0)  #79cdf0
     marginBottom: '30px', 
     fontSize: '2em',      
   };

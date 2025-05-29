@@ -624,7 +624,7 @@ function CashBalancePage() {
           ← Volver al Dashboard
         </button>
       </Link>
-      <h1 style={{color: '#333', textAlign: 'center', marginBottom: '30px'}} className="no-print">Gestión de Cuadre de Caja</h1>
+      <h1 style={{color: '#fffff', textAlign: 'center', marginBottom: '30px'}} className="no-print">Gestión de Cuadre de Caja</h1>
 
       {error && <p style={errorStyle} className="no-print">{error}</p>}
       {successMessage && <p style={successStyle} className="no-print">{successMessage}</p>}

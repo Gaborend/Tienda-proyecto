@@ -20,3 +20,11 @@ id,customer_id,action,details,user_id,date
 19,1,modificacion,"{""document_type"": ""CC"", ""document_number"": ""10203040"", ""full_name"": ""Ana Garc\u00eda P\u00e9rez PEREZz"", ""phone"": ""3101234567"", ""email"": ""ana.garcia@email.com"", ""address"": ""Calle 10 # 20-30"", ""is_active"": true}",1,2025-05-26 15:07:07.608019
 20,1,inactivacion,"{""inactivated"": true}",1,2025-05-26 23:50:46.925076
 21,1,modificacion,"{""document_type"": ""CC"", ""document_number"": ""10203040"", ""full_name"": ""Ana Garc\u00eda P\u00e9rez PEREZz"", ""phone"": ""3101234567"", ""email"": ""ana.garcia@email.com"", ""address"": ""Calle 10 # 20-30"", ""is_active"": true}",1,2025-05-26 23:50:51.853583
+22,1,inactivacion,"{""inactivated"": true}",1,2025-05-27 19:59:11.517316
+23,1,modificacion,"{""document_type"": ""CC"", ""document_number"": ""10203040"", ""full_name"": ""Ana Garc\u00eda P\u00e9rez PEREZz"", ""phone"": ""3101234567"", ""email"": ""ana.garcia@email.com"", ""address"": ""Calle 10 # 20-30"", ""is_active"": true}",1,2025-05-27 19:59:15.319939
+24,2,modificacion,"{""document_type"": ""NIT"", ""document_number"": ""900123456-7"", ""full_name"": ""Isabela casillas B"", ""phone"": ""604-9876543"", ""email"": ""compras@bellezasas.com"", ""address"": ""Avenida Siempre Viva 742"", ""is_active"": true}",1,2025-05-27 23:05:16.513426
+25,2,inactivacion,"{""inactivated"": true}",1,2025-05-27 23:06:07.546165
+26,2,modificacion,"{""document_type"": ""NIT"", ""document_number"": ""900123456-7"", ""full_name"": ""Isabela casillas B"", ""phone"": ""604-9876543"", ""email"": ""compras@bellezasas.com"", ""address"": ""Avenida Siempre Viva 742"", ""is_active"": true}",1,2025-05-27 23:06:11.318898
+27,2,modificacion,"{""document_type"": ""NIT"", ""document_number"": ""900123456-7"", ""full_name"": ""Isabela casillas BB"", ""phone"": ""604-9876543"", ""email"": null, ""address"": null, ""is_active"": true}",1,2025-05-27 23:07:07.491975
+28,8,inactivacion,"{""inactivated"": true}",1,2025-05-28 08:07:52.562392
+29,8,modificacion,"{""document_type"": ""CC"", ""document_number"": ""22"", ""full_name"": ""cliente2222"", ""phone"": ""1131313"", ""email"": ""bryanao.88@hotmail.com"", ""address"": null, ""is_active"": true}",1,2025-05-28 08:08:01.105265

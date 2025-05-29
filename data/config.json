@@ -5,7 +5,7 @@
     "invoice_footer": "\u00a1Gracias por su compra!",
     "store_logo_url": null,
     "invoice_prefix": "INV-",
-    "next_invoice_number": 22,
+    "next_invoice_number": 27,
     "initial_cash_balance": 50000.0,
     "apply_iva_by_default": false,
     "iva_percentage": 19.0,

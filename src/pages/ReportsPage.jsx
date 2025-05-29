@@ -67,10 +67,11 @@ function ReportsPage() {
   const [submittedInventoryMovementsFilters, setSubmittedInventoryMovementsFilters] = useState(null);
   
   // Estados para Reporte de Servicios Realizados
+  const [rawServicesPerformedData, setRawServicesPerformedData] = useState([]); // Para filtrado frontend
   const [servicesPerformedData, setServicesPerformedData] = useState([]);
   const [servicesPerformedFilters, setServicesPerformedFilters] = useState({
     start_date: '', end_date: '', 
-    service_id_filter: '', // ID del servicio registrado (nombre diferente al de salesFilters)
+    service_id_filter: '', 
     customer_id: '',
     include_temporary: true, 
   });
@@ -146,9 +147,9 @@ function ReportsPage() {
     Object.keys(params).forEach(key => {
       if (params[key] === '' || params[key] === null) delete params[key];
     });
-    if (params.customer_id) params.customer_id = parseInt(params.customer_id, 10);
-    if (params.product_id) params.product_id = parseInt(params.product_id, 10);
-    if (params.service_id) params.service_id = parseInt(params.service_id, 10);
+    if (params.customer_id && params.customer_id.trim() !== '') params.customer_id = parseInt(params.customer_id, 10); else delete params.customer_id;
+    if (params.product_id && params.product_id.trim() !== '') params.product_id = parseInt(params.product_id, 10); else delete params.product_id;
+    if (params.service_id && params.service_id.trim() !== '') params.service_id = parseInt(params.service_id, 10); else delete params.service_id;
     try {
         await reportsService.downloadSalesSummaryReport(params);
     } catch (err) {
@@ -266,56 +267,43 @@ function ReportsPage() {
     }));
   };
 
-  const fetchServicesPerformedReport = useCallback(async () => {
+  const fetchRawServicesPerformedReport = useCallback(async () => {
     if (!submittedServicesPerformedFilters) {
-      setServicesPerformedData([]); return;
+      setRawServicesPerformedData([]);
+      return;
     }
     setLoadingServicesPerformed(true);
     setServicesPerformedError('');
-    const params = { 
-      ...submittedServicesPerformedFilters, // Esto incluye start_date, end_date, service_id_filter, customer_id, include_temporary
+    const paramsForBackend = { 
+      start_date: submittedServicesPerformedFilters.start_date,
+      end_date: submittedServicesPerformedFilters.end_date,
+      customer_id: submittedServicesPerformedFilters.customer_id,
+      // NO enviamos service_id_filter ni include_temporary al backend aquí
+      // ya que el backend (según el último código) no los usa directamente para el query inicial.
+      // El filtrado de servicio específico y temporales se hace en el frontend.
       skip: servicesPerformedPagination.skip,
       limit: servicesPerformedPagination.limit
     };
     
-    if (params.service_id_filter && params.service_id_filter.trim() !== '') {
-        const serviceIdNum = parseInt(params.service_id_filter, 10);
-        if(!isNaN(serviceIdNum) && serviceIdNum > 0) {
-            params.service_id = serviceIdNum;
-        } else {
-             setServicesPerformedError(prevErr => (prevErr ? prevErr + " " : "") + "ID de Servicio Registrado inválido. Se ignorará este filtro.");
-        }
-    }
-    delete params.service_id_filter; 
-
-    if (params.customer_id && params.customer_id.trim() !== '') {
-        const customerIdNum = parseInt(params.customer_id, 10);
-         if(!isNaN(customerIdNum) && customerIdNum > 0) {
-            params.customer_id = customerIdNum;
-        } else {
-             setServicesPerformedError(prevErr => (prevErr ? prevErr + " " : "") + "ID de Cliente inválido. Se ignorará este filtro.");
-             delete params.customer_id;
-        }
-    } else {
-        delete params.customer_id;
-    }
-
-    Object.keys(params).forEach(key => {
-        if (typeof params[key] !== 'boolean' && (params[key] === '' || params[key] === null)) {
-            delete params[key];
-        }
+    Object.keys(paramsForBackend).forEach(key => {
+      if (paramsForBackend[key] === '' || paramsForBackend[key] === null) delete paramsForBackend[key];
     });
+    if (paramsForBackend.customer_id && paramsForBackend.customer_id.trim() !== '') {
+        const custId = parseInt(paramsForBackend.customer_id, 10);
+        if (!isNaN(custId) && custId > 0) paramsForBackend.customer_id = custId;
+        else delete paramsForBackend.customer_id;
+    } else {
+        delete paramsForBackend.customer_id;
+    }
         
     try {
-      const data = await reportsService.getServicesPerformedReport(params);
-      setServicesPerformedData(data || []);
-      if ((!data || data.length === 0) && submittedServicesPerformedFilters) {
-        setServicesPerformedError("No se encontraron servicios realizados con los filtros aplicados.");
-      }
+      const data = await reportsService.getServicesPerformedReport(paramsForBackend);
+      setRawServicesPerformedData(data || []);
     } catch (err) {
-      console.error("Error al generar reporte de servicios realizados:", err);
+      console.error("Error al generar reporte de servicios realizados (raw):", err);
       setServicesPerformedError("Error al generar reporte: " + (err.detail || err.message));
-      setServicesPerformedData([]);
+      setRawServicesPerformedData([]);
+      setServicesPerformedData([]); // Limpiar también los datos filtrados
     } finally {
       setLoadingServicesPerformed(false);
     }
@@ -323,9 +311,37 @@ function ReportsPage() {
 
   useEffect(() => {
     if (submittedServicesPerformedFilters) {
-      fetchServicesPerformedReport();
+      fetchRawServicesPerformedReport();
     }
-  }, [fetchServicesPerformedReport]);
+  }, [fetchRawServicesPerformedReport]);
+
+  useEffect(() => {
+    if (!submittedServicesPerformedFilters) {
+        setServicesPerformedData([]);
+        setServicesPerformedError('');
+        return;
+    }
+    let filteredData = [...rawServicesPerformedData];
+    const serviceIdToFilter = submittedServicesPerformedFilters.service_id_filter 
+                              ? parseInt(submittedServicesPerformedFilters.service_id_filter, 10) 
+                              : null;
+
+    if (!isNaN(serviceIdToFilter) && serviceIdToFilter > 0) {
+        filteredData = filteredData.filter(serv => serv.service_id === serviceIdToFilter && serv.service_id !== 0);
+    } else {
+        if (!submittedServicesPerformedFilters.include_temporary) {
+            filteredData = filteredData.filter(serv => serv.service_id !== 0);
+        }
+    }
+    setServicesPerformedData(filteredData);
+    if (submittedServicesPerformedFilters && filteredData.length === 0 && rawServicesPerformedData.length > 0) {
+         setServicesPerformedError("Ningún servicio coincide con el filtro de ID/temporales, aunque se encontraron resultados con otros filtros.");
+    } else if (submittedServicesPerformedFilters && filteredData.length === 0 && rawServicesPerformedData.length === 0 && !loadingServicesPerformed) {
+        setServicesPerformedError("No se encontraron servicios realizados con los filtros aplicados.");
+    } else if (filteredData.length > 0) {
+        setServicesPerformedError("");
+    }
+  }, [rawServicesPerformedData, submittedServicesPerformedFilters, loadingServicesPerformed]);
 
   const handleGenerateServicesPerformedReport = (e) => {
     e.preventDefault();
@@ -335,34 +351,38 @@ function ReportsPage() {
   };
 
   const handleExportServicesPerformedReport = async () => {
-    if (!submittedServicesPerformedFilters || servicesPerformedData.length === 0) {
-        alert("Por favor, genere un reporte con datos primero antes de exportar."); return;
+    if (!submittedServicesPerformedFilters || servicesPerformedData.length === 0) { // Usa servicesPerformedData (los filtrados)
+        alert("Por favor, genere y filtre un reporte con datos primero antes de exportar."); return;
     }
     setLoadingServicesPerformedExport(true);
     setServicesPerformedError(''); 
-    const params = { ...submittedServicesPerformedFilters };
+    // Para la exportación, necesitamos enviar los filtros AL BACKEND
+    // de la misma manera que el backend espera, incluyendo service_id y include_temporary
+    const paramsToExport = { ...submittedServicesPerformedFilters };
     
-    if (params.service_id_filter && params.service_id_filter.trim() !== '') {
-        const serviceIdNum = parseInt(params.service_id_filter, 10);
-        if(!isNaN(serviceIdNum) && serviceIdNum > 0) params.service_id = serviceIdNum;
+    if (paramsToExport.service_id_filter && paramsToExport.service_id_filter.trim() !== '') {
+        const serviceIdNum = parseInt(paramsToExport.service_id_filter, 10);
+        if(!isNaN(serviceIdNum) && serviceIdNum > 0) paramsToExport.service_id = serviceIdNum; // Parámetro que el backend espera
     }
-    delete params.service_id_filter; 
+    delete paramsToExport.service_id_filter; 
 
-    if (params.customer_id && params.customer_id.trim() !== '') {
-        const customerIdNum = parseInt(params.customer_id, 10);
-        if(!isNaN(customerIdNum) && customerIdNum > 0) params.customer_id = customerIdNum;
-        else delete params.customer_id;
+    if (paramsToExport.customer_id && paramsToExport.customer_id.trim() !== '') {
+        const customerIdNum = parseInt(paramsToExport.customer_id, 10);
+        if(!isNaN(customerIdNum) && customerIdNum > 0) paramsToExport.customer_id = customerIdNum;
+        else delete paramsToExport.customer_id;
     } else {
-        delete params.customer_id;
+        delete paramsToExport.customer_id;
     }
-    
-    Object.keys(params).forEach(key => {
-        if (typeof params[key] !== 'boolean' && (params[key] === '' || params[key] === null)) {
-            delete params[key];
+    // Asegurarse de que include_temporary se envíe como booleano si el backend lo espera así
+    // paramsToExport.include_temporary ya es booleano por el estado del checkbox
+
+    Object.keys(paramsToExport).forEach(key => {
+        if (typeof paramsToExport[key] !== 'boolean' && (paramsToExport[key] === '' || paramsToExport[key] === null)) {
+            delete paramsToExport[key];
         }
     });
     try {
-        await reportsService.downloadServicesPerformedReport(params);
+        await reportsService.downloadServicesPerformedReport(paramsToExport);
     } catch (err) {
         console.error("Error al exportar reporte de servicios:", err);
         setServicesPerformedError("Error al exportar reporte: " + (err.detail || err.message || "Error desconocido"));
@@ -581,20 +601,20 @@ function ReportsPage() {
         <form onSubmit={handleGenerateServicesPerformedReport} style={filterSectionStyle}>
          <div style={filterItemStyle}><label style={labelStyle} htmlFor="sp_start_date">Desde:</label><input style={inputStyle} type="date" id="sp_start_date" name="start_date" value={servicesPerformedFilters.start_date} onChange={handleServicesPerformedFilterChange} /></div>
           <div style={filterItemStyle}><label style={labelStyle} htmlFor="sp_end_date">Hasta:</label><input style={inputStyle} type="date" id="sp_end_date" name="end_date" value={servicesPerformedFilters.end_date} onChange={handleServicesPerformedFilterChange} /></div>
-          <div style={filterItemStyle}><label style={labelStyle} htmlFor="sp_service_id">ID Servicio (Registrado):</label><input style={inputStyle} type="text" id="sp_service_id" name="service_id_filter" value={servicesPerformedFilters.service_id_filter} onChange={handleServicesPerformedFilterChange} placeholder="Opcional"/></div>
+          <div style={filterItemStyle}><label style={labelStyle} htmlFor="sp_service_id_filter">ID Servicio (Registrado):</label><input style={inputStyle} type="text" id="sp_service_id_filter" name="service_id_filter" value={servicesPerformedFilters.service_id_filter} onChange={handleServicesPerformedFilterChange} placeholder="Opcional"/></div>
           <div style={filterItemStyle}><label style={labelStyle} htmlFor="sp_customer_id">ID Cliente:</label><input style={inputStyle} type="text" id="sp_customer_id" name="customer_id" value={servicesPerformedFilters.customer_id} onChange={handleServicesPerformedFilterChange} placeholder="Opcional"/></div>
-          <div style={{...filterItemStyle, minWidth: '200px', justifyContent:'center'}}>
-            <label htmlFor="sp_include_temporary" style={{...labelStyle, display:'inline-block', marginRight:'10px'}}>
-              Incluir Servicios Temporales:
-            </label>
+          <div style={{...filterItemStyle, minWidth: '200px', justifyContent:'center', alignItems:'flex-start', flexDirection:'row', paddingTop:'15px'}}>
             <input 
               type="checkbox" 
               id="sp_include_temporary" 
               name="include_temporary"
               checked={servicesPerformedFilters.include_temporary}
               onChange={handleServicesPerformedFilterChange}
-              style={{width:'auto', transform: 'scale(1.2)'}}
+              style={{width:'auto', transform: 'scale(1.3)', marginRight:'8px', marginTop:'3px'}}
             />
+            <label htmlFor="sp_include_temporary" style={{...labelStyle, fontWeight:'normal', cursor:'pointer'}}>
+              Incluir Servicios Temporales
+            </label>
           </div>
           <div style={{display:'flex', gap:'10px', width:'100%', marginTop:'10px'}}>
             <button type="submit" style={{ ...buttonStyle, backgroundColor: '#28a745', flexGrow:1}} disabled={loadingServicesPerformed}>

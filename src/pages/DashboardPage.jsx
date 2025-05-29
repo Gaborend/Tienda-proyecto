@@ -222,7 +222,7 @@ function DashboardPage() {
   return (
     <div style={pageStyle}>
       <div style={contentWrapperStyle}>
-        <h2 style={headingStyle}>¡Bienvenido a NoxSkin!</h2>
+        <h2 style={headingStyle}>¡Bienvenid@ a NoxSkin!</h2> 
         
         {loading && !currentUserDetails && <p style={{ textAlign: 'center', fontSize: '1.1em', margin: '20px 0' }}>Cargando tu información...</p>}
         {error && <p style={{ color: '#e74c3c', textAlign: 'center', fontSize: '1.1em', margin: '20px 0' }}>{error}</p>}

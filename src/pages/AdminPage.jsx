@@ -216,7 +216,7 @@ function AdminPage() {
         setEditUserSuccess('');
       }, 3000);
     } catch (err) {
-      setEditUserError('Error al actualizar usuario: ' + (err.detail || err.message || JSON.stringify(err)));
+      setEditUserError('ESTO ES DELICADO: Si está seguro presione Actualizar de nuevo ' );
     } finally {
       setLoadingEditUser(false);
     }

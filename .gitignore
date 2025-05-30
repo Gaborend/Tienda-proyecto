@@ -1,9 +1,15 @@
 # Dependencies
 /node_modules
 
+# Vite cache/build
+.vite/ 
+
 # Build output
 /dist
 /dist-ssr
+
+# Python Virtual Environment
+venv/ 
 
 # Logs
 logs
@@ -30,3 +36,7 @@ pids
 *.ntvs*
 *.njsproj
 *.sln
+
+# OS specific
+.DS_Store
+Thumbs.db

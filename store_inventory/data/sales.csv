@@ -1,0 +1,1 @@
+id,invoice_number,date,customer_id,customer_name,customer_document,subtotal,discount_value,discount_percentage,iva_applied,iva_percentage_used,total_amount,payment_method,created_by_user_id,created_by_username,items,status,cancellation_reason,cancelled_by_user_id,cancellation_date

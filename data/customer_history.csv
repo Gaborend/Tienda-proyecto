@@ -28,3 +28,8 @@ id,customer_id,action,details,user_id,date
 27,2,modificacion,"{""document_type"": ""NIT"", ""document_number"": ""900123456-7"", ""full_name"": ""Isabela casillas BB"", ""phone"": ""604-9876543"", ""email"": null, ""address"": null, ""is_active"": true}",1,2025-05-27 23:07:07.491975
 28,8,inactivacion,"{""inactivated"": true}",1,2025-05-28 08:07:52.562392
 29,8,modificacion,"{""document_type"": ""CC"", ""document_number"": ""22"", ""full_name"": ""cliente2222"", ""phone"": ""1131313"", ""email"": ""bryanao.88@hotmail.com"", ""address"": null, ""is_active"": true}",1,2025-05-28 08:08:01.105265
+30,2,modificacion,"{""document_type"": ""NIT"", ""document_number"": ""900123456-7"", ""full_name"": ""Isabela casillas "", ""phone"": ""604-9876543"", ""email"": null, ""address"": null, ""is_active"": true}",1,2025-05-29 15:08:49.076573
+31,2,modificacion,"{""document_type"": ""NIT"", ""document_number"": ""900123456-7"", ""full_name"": ""Isabela casillas "", ""phone"": ""604-9876543"", ""email"": null, ""address"": null, ""is_active"": false}",1,2025-05-29 15:08:52.083936
+32,2,modificacion,"{""document_type"": ""NIT"", ""document_number"": ""900123456-7"", ""full_name"": ""Isabela casillas "", ""phone"": ""604-9876543"", ""email"": null, ""address"": null, ""is_active"": true}",1,2025-05-29 15:08:56.382837
+33,1,inactivacion,"{""inactivated"": true}",1,2025-05-29 16:52:30.366999
+34,1,modificacion,"{""document_type"": ""CC"", ""document_number"": ""10203040"", ""full_name"": ""Ana Garc\u00eda P\u00e9rez PEREZz"", ""phone"": ""3101234567"", ""email"": ""ana.garcia@email.com"", ""address"": ""Calle 10 # 20-30"", ""is_active"": true}",1,2025-05-29 16:52:34.151602

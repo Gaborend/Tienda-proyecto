@@ -1,9 +1,15 @@
-<<<<<<< HEAD
+
 store_inventory/Scripts/
 store_inventory/Lib/
 store_inventory/Include/
 store_inventory/pyvenv.cfg
 
+# Frontend
+.vite/
+node_modules/
+dist/
+
+# Python / Backend
 __pycache__/
 *.pyc
 *.pyo

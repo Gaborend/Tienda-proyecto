@@ -11,7 +11,8 @@ import BillingPage from './pages/BillingPage';
 import SalesHistoryPage from './pages/SalesHistoryPage';
 import CashBalancePage from './pages/CashBalancePage';
 import CashBalanceHistoryPage from './pages/CashBalanceHistoryPage';
-import ReportsPage from './pages/ReportsPage'; // <-- IMPORTAR ReportsPage
+import ReportsPage from './pages/ReportsPage'; 
+import FinancialReportsPage from './pages/FinancialReportsPage'; // <-- IMPORTAR FinancialReportsPage
 
 import './App.css';
 
@@ -96,12 +97,20 @@ function App() {
             </ProtectedRoute>
           } 
         />
-        {/* --- NUEVA RUTA PARA REPORTES --- */}
         <Route 
-          path="/reports" 
+          path="/reports" // Esta es tu página de reportes general existente
           element={
-            <ProtectedRoute allowedRoles={['admin', 'soporte']}> {/* Ajusta roles según necesidad */}
+            <ProtectedRoute allowedRoles={['admin', 'soporte']}>
               <ReportsPage />
+            </ProtectedRoute>
+          } 
+        />
+        {/* --- NUEVA RUTA PARA REPORTES FINANCIEROS/INVENTARIO --- */}
+        <Route 
+          path="/financial-reports" 
+          element={
+            <ProtectedRoute allowedRoles={['admin', 'soporte']}> {/* Ajusta roles si es necesario */}
+              <FinancialReportsPage />
             </ProtectedRoute>
           } 
         />

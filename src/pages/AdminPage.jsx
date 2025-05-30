@@ -318,7 +318,7 @@ function AdminPage() {
               <h4>Formulario de Nuevo Usuario</h4>
               <div><label htmlFor="username_new">Username:</label><input type="text" id="username_new" name="username" value={newUser.username} onChange={handleNewUserChange} required /></div>
               <div><label htmlFor="full_name_new">Nombre Completo:</label><input type="text" id="full_name_new" name="full_name" value={newUser.full_name} onChange={handleNewUserChange} required /></div>
-              <div><label htmlFor="email_new">Email (Opcional):</label><input type="email" id="email_new" name="email" value={newUser.email} onChange={handleNewUserChange} /></div>
+              <div><label htmlFor="email_new">Email*:</label><input type="email" id="email_new" name="email" value={newUser.email} onChange={handleNewUserChange} /></div>
               <div><label htmlFor="password_new">Contraseña:</label><input type="password" id="password_new" name="password" value={newUser.password} onChange={handleNewUserChange} required minLength="6" /></div>
               <div><label htmlFor="role_new">Rol:</label><select id="role_new" name="role" value={newUser.role} onChange={handleNewUserChange}><option value="caja">Caja</option><option value="admin">Admin</option><option value="soporte">Soporte</option></select></div>
               <button type="submit" disabled={loadingCreateUser} style={{marginTop: '10px'}}>{loadingCreateUser ? 'Creando...' : 'Crear Usuario'}</button>

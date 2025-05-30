@@ -46,7 +46,7 @@ function DashboardPage() {
     navigate('/login');
   };
 
-  // Permisos (se mantienen igual)
+  // Permisos
   const canAccessAdminSettings = basicUser && ['admin', 'soporte'].includes(basicUser.role);
   const canAccessCustomersPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
   const canAccessInventoryPage = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
@@ -55,9 +55,10 @@ function DashboardPage() {
   const canAccessSalesHistory = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
   const canAccessCashBalance = basicUser && ['admin', 'soporte', 'caja'].includes(basicUser.role);
   const canAccessCashBalanceHistory = basicUser && ['admin', 'soporte'].includes(basicUser.role);
-  const canAccessReports = basicUser && ['admin', 'soporte'].includes(basicUser.role);
+  const canAccessReportsPage = basicUser && ['admin', 'soporte'].includes(basicUser.role); // Permiso para /reports (ReportsPage)
+  const canAccessFinancialReportsPage = basicUser && ['admin', 'soporte'].includes(basicUser.role); // Permiso para /financial-reports (FinancialReportsPage)
 
-  // --- ESTILOS GENERALES DE LA PÁGINA (se mantienen igual) ---
+  // --- ESTILOS ---
   const pageStyle = {
     display: 'flex',
     flexDirection: 'column',
@@ -77,65 +78,64 @@ function DashboardPage() {
     textAlign: 'left', 
   };
 
-  const headingStyle = { // Para "¡Bienvenido a NoxSkin!"
+  const headingStyle = { 
     textAlign: 'center', 
-    color: 'rgb(255, 119, 0)',     // o cambiar a narjan rgb(255, 119, 0)  #79cdf0
+    color: 'rgb(255, 119, 0)',
     marginBottom: '30px', 
     fontSize: '2em',      
   };
   
-  // --- ESTILOS PARA LA SECCIÓN "TU PERFIL" (Actualizados y Nuevos) ---
   const profileBoxStyle = { 
     border: '1px solid #383838', 
     backgroundColor: '#1e1e1e', 
     padding: '25px', 
     marginBottom: '30px',
-    borderRadius: '12px', // Bordes un poco más redondeados para la caja
+    borderRadius: '12px',
     boxShadow: '0 6px 15px rgba(0,0,0,0.25)', 
   };
 
   const profileBoxStyleBasic = { ...profileBoxStyle }; 
 
-  const profileSectionTitleStyle = { // Para el título "Tu Perfil:"
+  const profileSectionTitleStyle = { 
     color: '#e0e0e0',
     marginTop: '0',
     marginBottom: '25px', 
     fontSize: '1.6em',
     textAlign: 'left',
-    borderBottom: '1px solid #333', // Línea divisoria sutil bajo el título
+    borderBottom: '1px solid #333', 
     paddingBottom: '10px',
   };
   
-  const profileHeaderStyle = { // Contenedor para avatar y texto principal del perfil
+  const profileHeaderStyle = { 
     display: 'flex',
     alignItems: 'center',
     marginBottom: '25px',
   };
 
   const avatarPlaceholderStyle = {
-    width: '70px', // Avatar un poco más grande
+    width: '70px', 
     height: '70px',
     borderRadius: '50%',
-    backgroundColor: '#3a3f4b', // Un fondo un poco más claro para el avatar
+    backgroundColor: '#3a3f4b', 
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: '20px',
-    color: '#79cdf0', // Color de la inicial
-    fontSize: '28px', // Tamaño de la inicial
+    color: '#79cdf0', 
+    fontSize: '28px', 
     fontWeight: 'bold',
     flexShrink: 0,
   };
 
-  const profileInfoContainerStyle = { // Contenedor para Nombre, Usuario, Rol
+  const profileInfoContainerStyle = { 
     display: 'flex',
     flexDirection: 'column',
   };
 
   const profileFullNameStyle = {
-    fontSize: '1.5em', // Nombre más prominente
+    fontSize: '1.5em', 
     color: '#ffffff',
-    fontWeight: '600', // Un poco más de peso
+    fontWeight: '600', 
     margin: '0 0 5px 0',
   };
 
@@ -147,47 +147,46 @@ function DashboardPage() {
 
   const profileRoleStyle = {
     fontSize: '0.95em',
-    color: '#79cdf0', // Color de acento
+    color: '#79cdf0', 
     fontWeight: '500',
     fontStyle: 'italic',
   };
 
-  const profileDetailsListStyle = { // Contenedor para Email y Estado
+  const profileDetailsListStyle = { 
     marginTop: '20px',
   };
 
-  const profileDetailItemStyle = { // Para cada fila de detalle (Email, Estado)
+  const profileDetailItemStyle = { 
     display: 'flex',
-    alignItems: 'center', // Alinear etiqueta e info/badge
+    alignItems: 'center', 
     marginBottom: '12px',
     fontSize: '1em',
   };
 
-  const profileDetailLabelStyle = { // Para las etiquetas "Email:", "Estado:"
+  const profileDetailLabelStyle = { 
     fontWeight: 'bold',
     color: '#b0b0b0',
-    minWidth: '100px', // Ajusta según necesidad
+    minWidth: '100px', 
     flexShrink: 0,
     marginRight: '10px',
   };
 
-  const profileDetailValueStyle = { // Para el valor del email
+  const profileDetailValueStyle = { 
     color: '#ffffff',
     wordBreak: 'break-word',
   };
 
   const statusBadgeStyle = (isActive) => ({
     padding: '5px 12px',
-    borderRadius: '16px', // Más redondeado para efecto "pill"
+    borderRadius: '16px', 
     fontSize: '0.9em',
     fontWeight: 'bold',
     color: 'white',
-    backgroundColor: isActive ? '#28a745' : '#e74c3c', // Verde para activo, Rojo para inactivo
+    backgroundColor: isActive ? '#28a745' : '#e74c3c', 
     textAlign: 'center',
   });
 
-  // --- ESTILOS PARA ACCESOS RÁPIDOS Y LOGOUT (se mantienen igual) ---
-  const sectionHeadingStyle = { // Reutilizado para "Accesos Rápidos:"
+  const sectionHeadingStyle = { 
     color: '#e0e0e0',
     marginTop: '0',
     marginBottom: '25px', 
@@ -209,9 +208,8 @@ function DashboardPage() {
     boxShadow: '0 2px 5px rgba(0,0,0,0.15)',
   };
 
-  // --- Lógica para obtener la inicial del nombre ---
   const getInitials = (name) => {
-    if (!name) return 'U'; // Usuario por defecto
+    if (!name) return 'U'; 
     const parts = name.split(' ');
     if (parts.length > 1) {
       return parts[0].substring(0,1).toUpperCase() + parts[parts.length - 1].substring(0,1).toUpperCase();
@@ -230,7 +228,6 @@ function DashboardPage() {
         {currentUserDetails ? (
           <div style={profileBoxStyle}>
             <h3 style={profileSectionTitleStyle}>Tu Perfil:</h3>
-            
             <div style={profileHeaderStyle}>
               <div style={avatarPlaceholderStyle}>
                 {getInitials(currentUserDetails.full_name)}
@@ -241,10 +238,6 @@ function DashboardPage() {
                 <p style={profileRoleStyle}>{currentUserDetails.role}</p>
               </div>
             </div>
-
-            {/* Separador sutil si se desea, o se puede omitir si el espaciado es suficiente */}
-            {/* <hr style={{ borderColor: '#333', margin: '0 0 20px 0', opacity: 0.5 }}/> */}
-            
             <div style={profileDetailsListStyle}>
               <div style={profileDetailItemStyle}>
                 <span style={profileDetailLabelStyle}>Email:</span>
@@ -259,10 +252,9 @@ function DashboardPage() {
             </div>
           </div>
         ) : basicUser && !loading && !error ? ( 
-            // Vista básica del perfil (puedes aplicar un formato creativo similar si lo deseas)
             <div style={profileBoxStyleBasic}>
               <h3 style={profileSectionTitleStyle}>Tu Perfil (Básico):</h3>
-              <div style={profileHeaderStyle}> {/* Ejemplo de header básico */}
+              <div style={profileHeaderStyle}>
                 <div style={avatarPlaceholderStyle}>
                   {basicUser.username ? basicUser.username.substring(0,1).toUpperCase() : 'U'}
                 </div>
@@ -288,7 +280,21 @@ function DashboardPage() {
           {canAccessSalesHistory && ( <Link to="/sales-history" style={quickLinkStyle}> Historial de Ventas 📜 </Link> )}
           {canAccessCashBalance && ( <Link to="/cash-balance" style={quickLinkStyle}> Cuadre de Caja 💵 </Link> )}
           {canAccessCashBalanceHistory && ( <Link to="/cash-balance-history" style={quickLinkStyle}> Historial de Cuadres de Caja 📊 </Link> )}
-          {canAccessReports && ( <Link to="/reports" style={quickLinkStyle}> Reportes 📈 </Link> )}
+          
+          {/* ENLACE A REPORTES GENERALES (ReportsPage) */}
+          {canAccessReportsPage && ( 
+            <Link to="/reports" style={quickLinkStyle}> 
+              Reportes Generales 📈 
+            </Link> 
+          )}
+          
+          {/* ENLACE A REPORTES FINANCIEROS/INVENTARIO (FinancialReportsPage) */}
+          {canAccessFinancialReportsPage && ( 
+            <Link to="/financial-reports" style={quickLinkStyle}> 
+              Reportes Financieros/Inventario 💸
+            </Link> 
+          )}
+
         </div>
         
         <button onClick={handleLogout} style={logoutButtonStyle}> Cerrar Sesión </button>

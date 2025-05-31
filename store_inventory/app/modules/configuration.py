@@ -243,10 +243,32 @@ async def get_support_user(current_user: Dict[str, Any] = Depends(get_current_ac
 
 
 @router.get("/users", response_model=List[UserResponse])
-async def read_users(current_user_actor: Dict[str, Any] = Depends(get_admin_or_support_user)): # Renombrado para claridad
+async def read_users(current_user_actor: Dict[str, Any] = Depends(get_admin_or_support_user)):
     users_df = load_df(USERS_FILE, columns=["id", "username", "hashed_password", "full_name", "email", "role", "is_active"])
-    if users_df.empty: return []
-    return users_df.drop(columns=["hashed_password"]).to_dict("records")
+    if users_df.empty: 
+        return []
+
+    # --- INICIO DE LA CORRECCIÓN ---
+    # Reemplazar NaN y posibles strings vacíos en la columna 'email' con None
+    # para que Pydantic Optional[EmailStr] los maneje correctamente.
+    if 'email' in users_df.columns:
+        # Tratar NaNs (que Pandas podría leer de celdas vacías si interpreta la columna como float/object)
+        users_df['email'] = users_df['email'].where(pd.notna(users_df['email']), None)
+        # Tratar strings vacíos explícitos que Pydantic EmailStr rechazaría
+        users_df['email'] = users_df['email'].replace({"": None})
+
+    records = users_df.drop(columns=["hashed_password"], errors='ignore').to_dict("records")
+
+    # Adicionalmente, iterar para asegurar que 'email' sea None si es np.nan o similar,
+    # ya que to_dict("records") puede preservar algunos tipos de NaN.
+    # Pydantic necesita un 'None' literal de Python.
+    cleaned_records = []
+    for record in records:
+        if 'email' in record and pd.isna(record['email']):
+            record['email'] = None
+        cleaned_records.append(record)
+
+    return cleaned_records
 
 @router.post("/users", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_new_user(user: UserCreate, current_user_actor: Dict[str, Any] = Depends(get_admin_or_support_user)):
@@ -335,10 +357,19 @@ async def update_existing_user(
 
 @router.get("/users/me", response_model=UserResponse)
 async def read_users_me(current_user: Dict[str, Any] = Depends(get_current_active_user)):
-    # Quitar el hash para la respuesta
+    # Quitar el hash de la contraseña para la respuesta
     current_user_response_data = {k: v for k, v in current_user.items() if k != "hashed_password"}
-    return UserResponse(**current_user_response_data)
 
+    # --- INICIO DE LA CORRECCIÓN ---
+    # Limpiar el campo email antes de pasarlo a UserResponse para validación.
+    # Si el email es NaN (Not a Number, común con Pandas para celdas vacías) o un string vacío,
+    # lo convertimos a None, que es aceptable para Optional[EmailStr].
+    if 'email' in current_user_response_data:
+        if pd.isna(current_user_response_data['email']) or current_user_response_data['email'] == '':
+            current_user_response_data['email'] = None
+    # --- FIN DE LA CORRECCIÓN ---
+
+    return UserResponse(**current_user_response_data)
 
 @router.get("/store-settings", response_model=StoreConfig) # Dependencia es para cualquier usuario activo
 async def get_store_config(current_user: Dict[str, Any] = Depends(get_current_active_user)):

@@ -18,7 +18,10 @@ app = FastAPI(
     description="API para gestionar el inventario, ventas y cuadre de caja de una tienda de maquillaje.",
     version="1.0.0"
 )
-
+origins = [
+    "http://localhost:5173", # El origen de tu frontend Vite
+    
+]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 

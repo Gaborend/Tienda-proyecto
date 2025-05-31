@@ -8,6 +8,6 @@
     "next_invoice_number": 33,
     "initial_cash_balance": 50000.0,
     "apply_iva_by_default": false,
-    "iva_percentage": 19.0,
+    "iva_percentage": 20.0,
     "low_stock_threshold": 5
 }

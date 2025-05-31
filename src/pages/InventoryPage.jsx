@@ -380,7 +380,7 @@ function InventoryPage() {
             (activeView === 'edit' ? 'Cancelar Edición': 
             (activeView === 'adjust' ? 'Cancelar Ajuste' : 
             (activeView === 'history' ? 'Cerrar Historial' : 
-            (activeView === 'foundProduct' ? 'Limpiar Búsqueda y Ver Lista' : 'Cancelar'))))}</button>
+            (activeView === 'foundProduct' ? 'Volver a Lista' : 'Cancelar'))))}</button>
         )}
       </div>
 
@@ -469,8 +469,8 @@ function InventoryPage() {
               <div style={{...formFieldStyle, flex: 2}}><label htmlFor="description_new" style={formLabelStyle}>Descripción: *</label><input type="text" id="description_new" name="description" value={newProduct.description} onChange={(e) => handleInputChange(e, setNewProduct)} required style={formInputStyle} /></div>
             </div>
             <div style={formRowStyle}>
-              <div style={formFieldStyle}><label htmlFor="brand_new" style={formLabelStyle}>Marca (Opcional):</label><input type="text" id="brand_new" name="brand" value={newProduct.brand} onChange={(e) => handleInputChange(e, setNewProduct)} style={formInputStyle} /></div>
-              <div style={formFieldStyle}><label htmlFor="category_new" style={formLabelStyle}>Categoría (Opcional):</label><input type="text" id="category_new" name="category" value={newProduct.category} onChange={(e) => handleInputChange(e, setNewProduct)} style={formInputStyle} /></div>
+              <div style={formFieldStyle}><label htmlFor="brand_new" style={formLabelStyle}>Marca:*</label><input type="text" id="brand_new" name="brand" value={newProduct.brand} onChange={(e) => handleInputChange(e, setNewProduct)} style={formInputStyle} /></div>
+              <div style={formFieldStyle}><label htmlFor="category_new" style={formLabelStyle}>Categoría:*</label><input type="text" id="category_new" name="category" value={newProduct.category} onChange={(e) => handleInputChange(e, setNewProduct)} style={formInputStyle} /></div>
             </div>
             <div style={formRowStyle}>
               <div style={formFieldStyle}><label htmlFor="quantity_new" style={formLabelStyle}>Cantidad Inicial: *</label><input type="text" pattern="[0-9]*" title="Solo números enteros no negativos" id="quantity_new" name="quantity" value={newProduct.quantity} onChange={(e) => handleInputChange(e, setNewProduct)} required style={formInputStyle} /></div>
@@ -490,8 +490,8 @@ function InventoryPage() {
             <div style={formFieldStyle}><label htmlFor="edit_code" style={formLabelStyle}>Código Interno: (No editable)</label><input type="text" id="edit_code" name="code" value={editProductFormData.code} readOnly style={{...formInputStyle, backgroundColor:'#444'}}/></div>
             <div style={formFieldStyleFullWidth}><label htmlFor="edit_description" style={formLabelStyle}>Descripción: *</label><textarea id="edit_description" name="description" value={editProductFormData.description} onChange={(e) => handleInputChange(e, setEditProductFormData)} required rows="3" style={{...formInputStyle, resize:'vertical'}}/></div>
             <div style={formRowStyle}>
-              <div style={formFieldStyle}><label htmlFor="edit_brand" style={formLabelStyle}>Marca (Opcional):</label><input type="text" id="edit_brand" name="brand" value={editProductFormData.brand} onChange={(e) => handleInputChange(e, setEditProductFormData)} style={formInputStyle} /></div>
-              <div style={formFieldStyle}><label htmlFor="edit_category" style={formLabelStyle}>Categoría (Opcional):</label><input type="text" id="edit_category" name="category" value={editProductFormData.category} onChange={(e) => handleInputChange(e, setEditProductFormData)} style={formInputStyle} /></div>
+              <div style={formFieldStyle}><label htmlFor="edit_brand" style={formLabelStyle}>Marca:*</label><input type="text" id="edit_brand" name="brand" value={editProductFormData.brand} onChange={(e) => handleInputChange(e, setEditProductFormData)} style={formInputStyle} /></div>
+              <div style={formFieldStyle}><label htmlFor="edit_category" style={formLabelStyle}>Categoría:*</label><input type="text" id="edit_category" name="category" value={editProductFormData.category} onChange={(e) => handleInputChange(e, setEditProductFormData)} style={formInputStyle} /></div>
             </div>
             <div style={formRowStyle}>
                 <div style={formFieldStyle}><label htmlFor="edit_cost_value" style={formLabelStyle}>Valor de Costo: *</label><input type="text" pattern="[0-9]*\.?[0-9]{0,2}" title="Número con hasta 2 decimales" id="edit_cost_value" name="cost_value" value={editProductFormData.cost_value} onChange={(e) => handleInputChange(e, setEditProductFormData)} required style={formInputStyle} /></div>

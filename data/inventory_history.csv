@@ -77,3 +77,15 @@ id,product_id,product_code,quantity_changed,new_quantity,movement_type,notes,use
 76,16,LIP001ew,323,323,creacion_producto,Registro inicial de producto,1,2025-05-30 18:09:33.948802
 77,34903049,LIP0011,223,223,creacion_producto,Registro inicial de producto,1,2025-05-30 19:39:45.392350
 78,34903049,LIP0011,-1,222,venta,Venta asociada a factura ID: INV-32,1,2025-05-30 19:40:09.930034
+79,34903049,LIP0011,-1,221,venta,Venta asociada a factura ID: INV-33,1,2025-05-31 11:27:35.188347
+80,34903049,LIP0011,-1,220,venta,Venta asociada a factura ID: INV-34,1,2025-05-31 12:49:58.845993
+81,1,LIP001,1,39,cancelacion_venta,Cancelación de venta ID: INV-30,1,2025-05-31 12:55:30.388820
+82,4,SOM002,1,28,cancelacion_venta,Cancelación de venta ID: INV-29,1,2025-05-31 12:55:59.712206
+83,5,LIP002,1,45,cancelacion_venta,Cancelación de venta ID: INV-28,1,2025-05-31 12:56:33.686114
+84,34903049,LIP0011,1,221,cancelacion_venta,Cancelación de venta ID: INV-34,1,2025-05-31 12:59:11.312584
+85,1,LIP001,1,40,cancelacion_venta,Cancelación de venta ID: INV-24,1,2025-05-31 13:05:47.076408
+86,1,LIP001,-1,39,venta,Venta asociada a factura ID: INV-35,1,2025-05-31 13:12:53.372516
+87,1,LIP001,-1,38,venta,Venta asociada a factura ID: INV-36,1,2025-05-31 13:13:19.645129
+88,34903049,LIP0011,1,222,cancelacion_venta,Cancelación de venta ID: INV-33,1,2025-05-31 14:53:18.666541
+89,1,LIP001,-1,37,venta,Venta asociada a factura ID: INV-37,1,2025-05-31 15:01:07.207463
+90,1,LIP001,-1,36,venta,Venta asociada a factura ID: INV-38,1,2025-05-31 15:03:54.906997

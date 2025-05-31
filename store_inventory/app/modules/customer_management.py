@@ -6,7 +6,7 @@ from pathlib import Path
 from pydantic import BaseModel, EmailStr, Field
 import json 
 
-
+# Asumiendo que estas son tus importaciones de configuración existentes
 from app.modules.configuration import (
     get_current_active_user,
     get_admin_or_support_user,
@@ -20,11 +20,10 @@ router = APIRouter()
 CUSTOMERS_FILE = DATA_DIR / "customers.csv"
 CUSTOMER_COLUMNS = ["id", "document_type", "document_number", "full_name", "phone", "email", "address", "is_active", "created_at", "updated_at", "created_by_user_id", "updated_by_user_id"]
 
-
 CUSTOMER_HISTORY_FILE = DATA_DIR / "customer_history.csv"
 CUSTOMER_HISTORY_COLUMNS = ["id", "customer_id", "action", "details", "user_id", "date"]
 
-
+# --- Modelos Pydantic (sin cambios respecto a tu original) ---
 class CustomerBase(BaseModel):
     document_type: str = Field(..., description="Tipo de identificación (Cédula, Pasaporte, NIT, etc.)")
     document_number: str = Field(..., description="Número de identificación")
@@ -41,8 +40,8 @@ class CustomerUpdate(BaseModel):
     document_number: Optional[str] = None
     full_name: Optional[str] = Field(None, min_length=3)
     phone: Optional[str] = None
-    email: Optional[EmailStr] = None
-    address: Optional[str] = None
+    email: Optional[EmailStr] = None # Permite None explícito para borrar email
+    address: Optional[str] = None # Permite None explícito para borrar dirección
     is_active: Optional[bool] = None
 
 class CustomerResponse(CustomerBase):
@@ -53,7 +52,6 @@ class CustomerResponse(CustomerBase):
     created_by_user_id: int
     updated_by_user_id: Optional[int] = None
 
-#Modelo para historial
 class CustomerHistoryResponse(BaseModel):
     id: int
     customer_id: int
@@ -61,41 +59,154 @@ class CustomerHistoryResponse(BaseModel):
     details: str 
     user_id: int
     date: datetime
-    
+
+# --- Función de Log (sin cambios respecto a tu original) ---
 def log_customer_action(customer_id: int, action: str, user_id: int, details: Dict):
-    """Guarda un registro de acción sobre un cliente."""
     history_df = load_df(CUSTOMER_HISTORY_FILE, columns=CUSTOMER_HISTORY_COLUMNS)
-    next_id = history_df["id"].max() + 1 if not history_df.empty else 1
+    
+    # Asegurar que customer_id y user_id sean enteros para el log
+    try:
+        log_customer_id = int(customer_id)
+        log_user_id = int(user_id)
+    except (ValueError, TypeError):
+        # Manejar error si los IDs no son convertibles a int, aunque deberían serlo.
+        # Podrías loguear este error o lanzar una excepción si es crítico.
+        print(f"Error: IDs inválidos para log_customer_action. Customer ID: {customer_id}, User ID: {user_id}")
+        return # No loguear si los IDs son inválidos
+
+    next_id_candidate = history_df["id"].max() if not history_df.empty else 0
+    next_id = pd.to_numeric(next_id_candidate, errors='coerce')
+    if pd.isna(next_id): next_id = 0
+    next_id = int(next_id) + 1
+    
     now = datetime.now()
     log_entry = {
         "id": next_id,
-        "customer_id": customer_id,
+        "customer_id": log_customer_id,
         "action": action,
         "details": json.dumps(details), # Guardamos los detalles como JSON string
-        "user_id": user_id,
+        "user_id": log_user_id,
         "date": now
     }
     history_df = pd.concat([history_df, pd.DataFrame([log_entry])], ignore_index=True)
     save_df(history_df, CUSTOMER_HISTORY_FILE)
-    
-    
+
+# --- NUEVA Función Helper para Sanitizar Diccionarios de Cliente ---
+def sanitize_customer_dict_for_response(customer_dict: Dict[str, Any]) -> Dict[str, Any]:
+    processed_dict = customer_dict.copy()
+
+    for key, value in processed_dict.items():
+        if pd.isna(value):
+            processed_dict[key] = None
+
+    string_fields_required = ["document_type", "document_number", "full_name", "phone"]
+    for field in string_fields_required:
+        if field in processed_dict:
+            if processed_dict[field] is None:
+                processed_dict[field] = "" 
+            else:
+                val_str = str(processed_dict[field])
+                if val_str.endswith(".0") and val_str[:-2].isdigit(): # Ej: "123.0" -> "123"
+                    processed_dict[field] = val_str[:-2]
+                else:
+                    processed_dict[field] = val_str
+        elif field in CustomerBase.__annotations__:
+             processed_dict[field] = ""
+
+    optional_string_fields = ["email", "address"]
+    for field in optional_string_fields:
+        if field in processed_dict and processed_dict[field] is not None:
+            val_str = str(processed_dict[field])
+            if val_str.lower() in ["nan", "none", ""]:
+                processed_dict[field] = None
+            else:
+                processed_dict[field] = val_str
+        elif field in processed_dict and processed_dict[field] is None: # Asegurar que si es None, se mantenga None
+             processed_dict[field] = None
+
+
+    date_fields = ['created_at', 'updated_at']
+    for field in date_fields:
+        if field in processed_dict:
+            if processed_dict[field] is not None:
+                dt_val = pd.to_datetime(processed_dict[field], errors='coerce')
+                processed_dict[field] = None if pd.isna(dt_val) else dt_val
+            elif field in CustomerResponse.__annotations__ and not isinstance(CustomerResponse.__annotations__[field], type(None)): # Si es None pero Pydantic lo requiere
+                 # Esto indica un problema de datos si un campo de fecha requerido es None.
+                 # Pydantic fallará, lo cual es el comportamiento esperado.
+                 # Podríamos asignar un valor por defecto aquí si fuera apropiado, pero usualmente no lo es para timestamps.
+                 pass
+
+
+    if 'is_active' in processed_dict:
+        if processed_dict['is_active'] is None:
+            processed_dict['is_active'] = False 
+        else:
+            val = processed_dict['is_active']
+            if isinstance(val, str):
+                processed_dict['is_active'] = val.lower() == 'true' or val == '1'
+            else:
+                processed_dict['is_active'] = bool(val)
+    elif 'is_active' in CustomerResponse.__annotations__:
+        processed_dict['is_active'] = False
+
+    id_fields_to_int = ['id', 'created_by_user_id']
+    for field in id_fields_to_int:
+        if field in processed_dict:
+            if processed_dict[field] is None:
+                # Estos IDs son requeridos y no pueden ser None
+                raise HTTPException(status_code=500, detail=f"El campo ID '{field}' es None, lo cual no está permitido para el cliente: {processed_dict.get('id', 'ID DESCONOCIDO')}")
+            try:
+                processed_dict[field] = int(float(str(processed_dict[field])))
+            except (ValueError, TypeError):
+                raise HTTPException(status_code=500, detail=f"Campo ID '{field}' inválido ('{processed_dict[field]}') para el cliente: {processed_dict.get('id', 'ID DESCONOCIDO')}")
+        elif field in CustomerResponse.__annotations__ and not isinstance(CustomerResponse.__annotations__[field], type(None)):
+             raise HTTPException(status_code=500, detail=f"Falta el campo ID requerido '{field}' para el cliente: {processed_dict.get('id', 'ID DESCONOCIDO')}")
+
+
+    if 'updated_by_user_id' in processed_dict and processed_dict['updated_by_user_id'] is not None:
+        try:
+            processed_dict['updated_by_user_id'] = int(float(str(processed_dict['updated_by_user_id'])))
+        except (ValueError, TypeError):
+            processed_dict['updated_by_user_id'] = None 
+            print(f"Advertencia: updated_by_user_id '{customer_dict['updated_by_user_id']}' no pudo ser convertido a int y se estableció a None.")
+
+    return processed_dict
+
+# --- Rutas del API Router (Corregidas y/o Mejoradas) ---
+
 @router.post("/", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
 async def create_customer(
     customer_in: CustomerCreate,
-    current_user: Dict[str, Any] = Depends(get_current_active_user) # MANTENIDO: Cualquier user puede crear
+    current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
     customers_df = load_df(CUSTOMERS_FILE, columns=CUSTOMER_COLUMNS)
     
-    if not customers_df[(customers_df["document_type"] == customer_in.document_type) &
-                        (customers_df["document_number"] == customer_in.document_number)].empty:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Ya existe un cliente con este tipo y número de documento."
+    customer_in_doc_type_cleaned = customer_in.document_type.strip()
+    customer_in_doc_num_cleaned = customer_in.document_number.strip()
+    if customer_in_doc_num_cleaned.endswith(".0") and customer_in_doc_num_cleaned[:-2].isdigit():
+        customer_in_doc_num_cleaned = customer_in_doc_num_cleaned[:-2]
+
+    if not customers_df.empty:
+        df_doc_num_standardized = customers_df["document_number"].astype(str).apply(
+            lambda x: (x[:-2] if isinstance(x,str) and x.endswith(".0") and x[:-2].isdigit() else x).strip()
         )
+        condition = (
+            (customers_df["document_type"].astype(str).str.strip() == customer_in_doc_type_cleaned) &
+            (df_doc_num_standardized == customer_in_doc_num_cleaned)
+        )
+        if not customers_df[condition].empty:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ya existe un cliente con este tipo y número de documento."
+            )
+    
+    next_id_candidate = customers_df["id"].max() if not customers_df.empty else 0
+    next_id_num = pd.to_numeric(next_id_candidate, errors='coerce')
+    if pd.isna(next_id_num): next_id_num = 0
+    next_id = int(next_id_num) + 1
 
-    next_id = customers_df["id"].max() + 1 if not customers_df.empty else 1
     now = datetime.now()
-
     new_customer_data = customer_in.dict()
     new_customer_data["id"] = next_id
     new_customer_data["is_active"] = True
@@ -104,19 +215,36 @@ async def create_customer(
     new_customer_data["created_by_user_id"] = current_user["id"]
     new_customer_data["updated_by_user_id"] = current_user["id"]
 
-    customers_df = pd.concat([customers_df, pd.DataFrame([new_customer_data])], ignore_index=True)
+    new_customer_df_row = pd.DataFrame([new_customer_data]) 
+    # Asegurar que todas las columnas necesarias existan en la nueva fila antes de concatenar
+    for col in CUSTOMER_COLUMNS:
+        if col not in new_customer_df_row.columns:
+             # Asegurar que el default sea compatible con el tipo esperado o pd.NA
+            if col in ['created_at', 'updated_at']:
+                new_customer_df_row[col] = pd.NaT
+            elif col in ['is_active']:
+                new_customer_df_row[col] = True # O False, según la lógica de negocio para nuevos
+            elif col in ['id', 'created_by_user_id', 'updated_by_user_id']: # Suponiendo que estos IDs son int
+                new_customer_df_row[col] = pd.NA # O un valor int por defecto si aplica
+            else: # Para strings
+                new_customer_df_row[col] = ""
+
+
+    # Reordenar columnas para que coincidan con CUSTOMER_COLUMNS si es necesario
+    new_customer_df_row = new_customer_df_row.reindex(columns=CUSTOMER_COLUMNS)
+
+
+    customers_df = pd.concat([customers_df, new_customer_df_row], ignore_index=True)
     save_df(customers_df, CUSTOMERS_FILE)
+    
+    return sanitize_customer_dict_for_response(new_customer_data.copy())
 
-    # Nota: No logueamos la creación, pero podríamos si quisiéramos.
 
-    return CustomerResponse(**new_customer_data)
-
-# --- Rutas GET (sin cambios) ---
 @router.get("/", response_model=List[CustomerResponse])
 async def read_customers(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1),
-    active_only: bool = Query(None, description="Filtrar solo clientes activos (true/false) o mostrar todos (si no se envía)"), # Permitir no enviar para mostrar todos
+    active_only: Optional[bool] = Query(None, description="Filtrar solo clientes activos (true/false) o mostrar todos (si no se envía)"),
     search: Optional[str] = Query(None, description="Buscar por nombre, documento o email"),
     current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
@@ -124,120 +252,84 @@ async def read_customers(
     if customers_df.empty:
         return []
 
-    if active_only is not None: # Solo filtrar si se provee el parámetro
-        customers_df = customers_df[customers_df["is_active"] == active_only]
+    if active_only is not None:
+        # Convertir la columna 'is_active' del df a booleano de Python para comparación robusta
+        df_is_active_bool = customers_df["is_active"].apply(
+            lambda x: (str(x).lower() == 'true' or str(x) == '1') if pd.notna(x) else False
+        )
+        customers_df = customers_df[df_is_active_bool == active_only]
     
     if search:
-        search_lower = search.lower()
-        # Asegurarse que las columnas existan y manejar NaN antes de aplicar .str
+        search_lower = search.lower().strip()
+        df_doc_num_standardized = customers_df["document_number"].astype(str).apply(
+            lambda x: (x[:-2] if isinstance(x,str) and x.endswith(".0") and x[:-2].isdigit() else x).strip().lower()
+        )
         customers_df = customers_df[
             customers_df["full_name"].astype(str).str.lower().str.contains(search_lower, na=False) |
-            customers_df["document_number"].astype(str).str.lower().str.contains(search_lower, na=False) |
+            df_doc_num_standardized.str.contains(search_lower, na=False) |
             customers_df["email"].astype(str).str.lower().str.contains(search_lower, na=False)
         ]
     
-    # <<< --- INICIO DE LA CORRECCIÓN CRÍTICA --- >>>
-    # Reemplazar NaN y pd.NA con None para evitar errores de validación de Pydantic
-    # Esto es importante para campos Optional[str], Optional[int], etc.
-    df_for_response = customers_df.iloc[skip : skip + limit].copy() # Trabajar sobre una copia de la porción
+    df_paginated = customers_df.iloc[skip : skip + limit]
     
-    # Convertir columnas de fecha a datetime si son strings y asegurar que Pydantic las reciba bien
-    # Pandas to_datetime maneja diferentes formatos y devuelve NaT para inválidos.
-    if 'created_at' in df_for_response.columns:
-        df_for_response['created_at'] = pd.to_datetime(df_for_response['created_at'], errors='coerce')
-    if 'updated_at' in df_for_response.columns:
-        df_for_response['updated_at'] = pd.to_datetime(df_for_response['updated_at'], errors='coerce')
-
-    # Reemplazar NaT (Not a Time) resultante de conversiones fallidas por None, Pydantic lo maneja bien para Optional[datetime]
-    # Y reemplazar NaN y pd.NA genéricos con None para otros tipos de datos opcionales
-    # El método .replace es más amplio y puede manejar varios reemplazos
-    df_for_response = df_for_response.replace({pd.NaT: None, float('nan'): None, pd.NA: None})
-    # <<< --- FIN DE LA CORRECCIÓN CRÍTICA --- >>>
-
-    records = df_for_response.to_dict(orient="records")
+    records = df_paginated.to_dict(orient="records")
+    sanitized_records = [sanitize_customer_dict_for_response(record.copy()) for record in records]
     
-    # Pydantic intentará convertir los valores a los tipos del modelo.
-    # Si 'created_at' o 'updated_at' son None (por NaT previo), Pydantic los aceptará para Optional[datetime].
-    # Si son Timestamps de Pandas, Pydantic también los manejará para campos datetime.
-    return records
+    return sanitized_records
+
 
 @router.get("/{customer_id}", response_model=CustomerResponse)
-async def read_customer( # Esta es la función para buscar por ID
+async def read_customer(
     customer_id: int,
     current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
     customers_df = load_df(CUSTOMERS_FILE, columns=CUSTOMER_COLUMNS)
-    # Filtra para obtener una Serie (una fila) si el ID existe
-    customer_series = customers_df[customers_df["id"] == customer_id]
+    if customers_df.empty:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay clientes registrados.")
 
-    if customer_series.empty:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
+    df_id_as_numeric = pd.to_numeric(customers_df["id"], errors='coerce')
+    customer_series_df = customers_df[df_id_as_numeric == customer_id]
+
+    if customer_series_df.empty:
+        customer_series_df = customers_df[customers_df["id"].astype(str) == str(customer_id)]
+        if customer_series_df.empty:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
     
-    # Convertir la primera (y única) fila encontrada a un diccionario
-    customer_dict = customer_series.iloc[0].to_dict()
-    
-    # <<< --- INICIO CORRECCIÓN CRÍTICA --- >>>
-    # Sanitizar NaN/NaT a None en el diccionario antes de que Pydantic valide
-    for key, value in customer_dict.items():
-        if pd.isna(value):  # pd.isna() es True para None, np.nan, pd.NaT
-            customer_dict[key] = None
-    
-    # Asegurar que los campos de fecha sean objetos datetime o None
-    # Esto es importante si tus fechas en CSV son strings y Pydantic espera datetime
-    if 'created_at' in customer_dict and customer_dict['created_at'] is not None:
-        customer_dict['created_at'] = pd.to_datetime(customer_dict['created_at'], errors='coerce')
-        if pd.isna(customer_dict['created_at']): # Si la conversión falla, poner None
-             customer_dict['created_at'] = None
-            
-    if 'updated_at' in customer_dict and customer_dict['updated_at'] is not None:
-        customer_dict['updated_at'] = pd.to_datetime(customer_dict['updated_at'], errors='coerce')
-        if pd.isna(customer_dict['updated_at']): # Si la conversión falla, poner None
-            customer_dict['updated_at'] = None
-    # <<< --- FIN CORRECCIÓN CRÍTICA --- >>>
-            
-    return customer_dict
+    customer_dict = customer_series_df.iloc[0].to_dict()
+    return sanitize_customer_dict_for_response(customer_dict.copy())
 
 
-@router.get("/by_document/", response_model=CustomerResponse) # Esta es la función para buscar por documento
+@router.get("/by_document/", response_model=CustomerResponse)
 async def read_customer_by_document(
-    document_type: str = Query(...), # Hacemos los query params obligatorios
+    document_type: str = Query(...),
     document_number: str = Query(...),
     current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
     customers_df = load_df(CUSTOMERS_FILE, columns=CUSTOMER_COLUMNS)
-    # Filtra para obtener una Serie (una fila) si el documento existe
-    customer_series = customers_df[
-        (customers_df["document_type"].astype(str) == document_type) &  # Asegurar comparación de strings
-        (customers_df["document_number"].astype(str) == document_number)
+    if customers_df.empty:
+         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay clientes para buscar.")
+
+    search_doc_type_cleaned = document_type.strip()
+    search_doc_number_cleaned = document_number.strip()
+    if search_doc_number_cleaned.endswith(".0") and search_doc_number_cleaned[:-2].isdigit():
+        search_doc_number_cleaned = search_doc_number_cleaned[:-2]
+
+    df_doc_num_standardized = customers_df["document_number"].astype(str).apply(
+        lambda x: (x[:-2] if isinstance(x,str) and x.endswith(".0") and x[:-2].isdigit() else x).strip()
+    )
+    
+    customer_series_df = customers_df[
+        (customers_df["document_type"].astype(str).str.strip() == search_doc_type_cleaned) &
+        (df_doc_num_standardized == search_doc_number_cleaned)
     ]
 
-    if customer_series.empty:
+    if customer_series_df.empty:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado con ese documento")
     
-    # Convertir la primera (y única) fila encontrada a un diccionario
-    customer_dict = customer_series.iloc[0].to_dict()
+    customer_dict = customer_series_df.iloc[0].to_dict()
+    return sanitize_customer_dict_for_response(customer_dict.copy())
 
-    # <<< --- INICIO CORRECCIÓN CRÍTICA --- >>>
-    # Sanitizar NaN/NaT a None en el diccionario antes de que Pydantic valide
-    for key, value in customer_dict.items():
-        if pd.isna(value): # pd.isna() es True para None, np.nan, pd.NaT
-            customer_dict[key] = None
 
-    # Asegurar que los campos de fecha sean objetos datetime o None
-    if 'created_at' in customer_dict and customer_dict['created_at'] is not None:
-        customer_dict['created_at'] = pd.to_datetime(customer_dict['created_at'], errors='coerce')
-        if pd.isna(customer_dict['created_at']):
-             customer_dict['created_at'] = None
-
-    if 'updated_at' in customer_dict and customer_dict['updated_at'] is not None:
-        customer_dict['updated_at'] = pd.to_datetime(customer_dict['updated_at'], errors='coerce')
-        if pd.isna(customer_dict['updated_at']):
-            customer_dict['updated_at'] = None
-    # <<< --- FIN CORRECCIÓN CRÍTICA --- >>>
-
-    return customer_dict
-
-# --- Ruta PUT (MODIFICADA para añadir log) ---
 @router.put("/{customer_id}", response_model=CustomerResponse)
 async def update_customer(
     customer_id: int,
@@ -245,97 +337,178 @@ async def update_customer(
     current_user: Dict[str, Any] = Depends(get_admin_or_support_user)
 ):
     customers_df = load_df(CUSTOMERS_FILE, columns=CUSTOMER_COLUMNS)
-    customer_index = customers_df[customers_df["id"] == customer_id].index
+    if customers_df.empty:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay clientes para actualizar.")
 
-    if customer_index.empty:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
+    df_id_as_numeric = pd.to_numeric(customers_df["id"], errors='coerce')
+    original_customer_series_df = customers_df[df_id_as_numeric == customer_id]
 
-    idx = customer_index[0]
-    update_data = customer_in.dict(exclude_unset=True) # Solo los campos enviados
+    if original_customer_series_df.empty:
+        original_customer_series_df = customers_df[customers_df["id"].astype(str) == str(customer_id)]
+        if original_customer_series_df.empty:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado para actualizar")
 
-    # Validar documento duplicado si se cambia
-    if "document_number" in update_data or "document_type" in update_data:
-        doc_type = update_data.get("document_type", customers_df.loc[idx, "document_type"])
-        doc_num = update_data.get("document_number", customers_df.loc[idx, "document_number"])
-        existing_customer_conflict = customers_df[
-            (customers_df["document_type"] == doc_type) &
-            (customers_df["document_number"] == doc_num) &
-            (customers_df["id"] != customer_id)
-        ]
-        if not existing_customer_conflict.empty:
+    idx = original_customer_series_df.index[0]
+    actual_customer_id_in_df = int(float(str(original_customer_series_df.loc[idx, "id"])))
+
+    update_data = customer_in.dict(exclude_unset=True)
+    if not update_data:
+        current_customer_dict = customers_df.loc[idx].to_dict()
+        return sanitize_customer_dict_for_response(current_customer_dict.copy())
+
+    # Obtener valores actuales o nuevos para la comprobación de duplicados
+    doc_type_to_check = str(update_data.get("document_type", customers_df.loc[idx, "document_type"])).strip()
+    
+    doc_num_val_for_check = update_data.get("document_number", customers_df.loc[idx, "document_number"])
+    doc_num_to_check_cleaned = str(doc_num_val_for_check).strip()
+    if doc_num_to_check_cleaned.endswith(".0") and doc_num_to_check_cleaned[:-2].isdigit():
+        doc_num_to_check_cleaned = doc_num_to_check_cleaned[:-2]
+
+
+    if "document_number" in update_data or "document_type" in update_data: # Solo verificar si estos campos cambian
+        df_doc_num_standardized = customers_df["document_number"].astype(str).apply(
+            lambda x: (x[:-2] if isinstance(x,str) and x.endswith(".0") and x[:-2].isdigit() else x).strip()
+        )
+        # Necesitamos el ID del DataFrame como int para la comparación
+        df_ids_int = pd.to_numeric(customers_df["id"], errors='coerce').fillna(-1).astype(int)
+
+
+        conflict_condition = (
+            (customers_df["document_type"].astype(str).str.strip() == doc_type_to_check) &
+            (df_doc_num_standardized == doc_num_to_check_cleaned) &
+            (df_ids_int != actual_customer_id_in_df) 
+        )
+        if not customers_df[conflict_condition].empty:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Otro cliente ya existe con este tipo y número de documento."
+                detail="Otro cliente ya existe con este nuevo tipo y número de documento."
             )
 
-    # --- LOG DE AUDITORÍA ---
-    if update_data: # Solo loguear si hay algo que cambiar
+    if update_data: 
         log_customer_action(
-            customer_id=customer_id,
+            customer_id=actual_customer_id_in_df,
             action="modificacion",
             user_id=current_user["id"],
-            details=update_data 
+            details=update_data
         )
-    # --- FIN LOG ---
 
     for key, value in update_data.items():
-        customers_df.loc[idx, key] = value
+        # Pydantic Optional[EmailStr]=None significa borrar email.
+        # Si value es None y el campo es opcional, se setea a None (o pd.NA para Pandas)
+        if value is None and key in ["email", "address", "updated_by_user_id"]: # Campos opcionales que pueden ser None
+            customers_df.loc[idx, key] = pd.NA 
+        else:
+            customers_df.loc[idx, key] = value
     
     customers_df.loc[idx, "updated_at"] = datetime.now()
     customers_df.loc[idx, "updated_by_user_id"] = current_user["id"]
     
     save_df(customers_df, CUSTOMERS_FILE)
-    return customers_df.loc[idx].to_dict()
+    
+    updated_customer_dict_from_df = customers_df.loc[idx].to_dict()
+    return sanitize_customer_dict_for_response(updated_customer_dict_from_df.copy())
 
-# --- Ruta PATCH (MODIFICADA para añadir log) ---
+
 @router.patch("/{customer_id}/inactivate", status_code=status.HTTP_200_OK)
 async def inactivate_customer(
     customer_id: int,
     current_user: Dict[str, Any] = Depends(get_admin_or_support_user)
 ):
     customers_df = load_df(CUSTOMERS_FILE, columns=CUSTOMER_COLUMNS)
-    customer_index = customers_df[customers_df["id"] == customer_id].index
+    if customers_df.empty:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay clientes para inactivar.")
 
-    if customer_index.empty:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
+    df_id_as_numeric = pd.to_numeric(customers_df["id"], errors='coerce')
+    original_customer_series_df = customers_df[df_id_as_numeric == customer_id]
 
-    idx = customer_index[0]
-    if not customers_df.loc[idx, "is_active"]:
+    if original_customer_series_df.empty:
+        original_customer_series_df = customers_df[customers_df["id"].astype(str) == str(customer_id)]
+        if original_customer_series_df.empty:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado para inactivar")
+    
+    idx = original_customer_series_df.index[0]
+    actual_customer_id_in_df = int(float(str(customers_df.loc[idx, "id"])))
+
+    current_is_active_val = customers_df.loc[idx, "is_active"]
+    is_currently_active = False 
+    if pd.notna(current_is_active_val):
+        if isinstance(current_is_active_val, str):
+            is_currently_active = current_is_active_val.lower() == 'true' or current_is_active_val == '1'
+        else:
+            is_currently_active = bool(current_is_active_val)
+    
+    if not is_currently_active:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El cliente ya está inactivo")
 
-    customers_df.loc[idx, "is_active"] = False
+    customers_df.loc[idx, "is_active"] = False 
     customers_df.loc[idx, "updated_at"] = datetime.now()
     customers_df.loc[idx, "updated_by_user_id"] = current_user["id"]
     
     save_df(customers_df, CUSTOMERS_FILE)
 
-    # --- LOG DE AUDITORÍA ---
     log_customer_action(
-        customer_id=customer_id,
+        customer_id=actual_customer_id_in_df,
         action="inactivacion",
         user_id=current_user["id"],
-        details={"inactivated": True} # Detalle simple
+        details={"inactivated": True}
     )
-    # --- FIN LOG ---
+    
+    return {"message": "Cliente inactivado correctamente", "customer_id": actual_customer_id_in_df}
 
-    return {"message": "Cliente inactivado correctamente", "customer_id": customer_id}
 
-# --- NUEVA: Ruta para ver el historial de clientes ---
 @router.get("/{customer_id}/history", response_model=List[CustomerHistoryResponse])
 async def get_customer_history(
     customer_id: int,
-    current_user: Dict[str, Any] = Depends(get_admin_or_support_user) # Solo Admin/Soporte ve historial
+    current_user: Dict[str, Any] = Depends(get_admin_or_support_user)
 ):
-    # Validar que el cliente exista
     customers_df = load_df(CUSTOMERS_FILE, columns=CUSTOMER_COLUMNS)
-    if customers_df[customers_df["id"] == customer_id].empty:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado")
+    if customers_df.empty:
+         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay clientes para verificar historial.")
+
+    df_id_as_numeric = pd.to_numeric(customers_df["id"], errors='coerce')
+    customer_exists_df = customers_df[df_id_as_numeric == customer_id]
+    if customer_exists_df.empty:
+        customer_exists_df = customers_df[customers_df["id"].astype(str) == str(customer_id)]
+        if customer_exists_df.empty:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cliente no encontrado para ver historial")
 
     history_df = load_df(CUSTOMER_HISTORY_FILE, columns=CUSTOMER_HISTORY_COLUMNS)
     if history_df.empty:
         return []
 
-    customer_history = history_df[history_df["customer_id"] == customer_id]
+    # Asegurar que customer_id en history_df (que debería ser int) se compare con el int customer_id
+    history_customer_id_col_numeric = pd.to_numeric(history_df["customer_id"], errors='coerce')
+    customer_specific_history_df = history_df[history_customer_id_col_numeric == customer_id]
     
-    return customer_history.sort_values(by="date", ascending=False).to_dict(orient="records")
+    # Sanitización para la respuesta del historial
+    # CustomerHistoryResponse espera 'details: str', 'date: datetime', 'id: int', 'customer_id: int', 'user_id: int'
+    if customer_specific_history_df.empty:
+        return []
+        
+    results = []
+    for _, row in customer_specific_history_df.iterrows():
+        history_item = row.to_dict()
+        # Asegurar tipos correctos
+        try:
+            history_item['id'] = int(float(str(history_item.get('id',0))))
+            history_item['customer_id'] = int(float(str(history_item.get('customer_id',0))))
+            history_item['user_id'] = int(float(str(history_item.get('user_id',0))))
+        except (ValueError, TypeError):
+            print(f"Advertencia: No se pudieron convertir IDs a int para el registro de historial: {history_item}")
+            continue # Omitir este registro de historial si los IDs son inválidos
 
+        history_item['date'] = pd.to_datetime(history_item.get('date'), errors='coerce')
+        if pd.isna(history_item['date']): # Si la fecha no es válida, no incluirla o manejar error
+            print(f"Advertencia: Fecha inválida para el registro de historial: {history_item}")
+            continue # Omitir
+            
+        # 'details' ya debería ser un string JSON. Si no, asegurarse.
+        if not isinstance(history_item.get('details'), str):
+            history_item['details'] = json.dumps(history_item.get('details', {}))
+            
+        # 'action' debería ser string
+        history_item['action'] = str(history_item.get('action', ''))
+
+        results.append(history_item)
+        
+    return sorted(results, key=lambda x: x['date'], reverse=True)

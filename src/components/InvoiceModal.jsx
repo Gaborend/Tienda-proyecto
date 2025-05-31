@@ -1,7 +1,8 @@
 // src/components/InvoiceModal.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import authService from '../services/authService'; // Importar el servicio de autenticación
 
-// Estilos para la visualización en pantalla (sin cambios)
+// Estilos (sin cambios, se mantienen los que ya tienes)
 const modalOverlayStyle = {
   position: 'fixed',
   top: 0,
@@ -102,190 +103,131 @@ const cancelledStatusStyle = {
     marginBottom: '15px',
 };
 
-// Estilos de impresión (los mismos que te proporcioné antes, que son robustos)
 const printStyles = `
   @media print {
     @page {
       margin: 10mm; 
       size: auto; 
     }
-
     html, body {
-      width: 100% !important;
-      height: auto !important;
-      overflow: hidden !important; 
-      background: #fff !important;
-      margin: 0 !important; 
-      padding: 0 !important; 
+      width: 100% !important; height: auto !important; overflow: hidden !important; 
+      background: #fff !important; margin: 0 !important; padding: 0 !important; 
       font-size: 10pt;
     }
-
-    body * {
-      /* Inicialmente, todo en el body del iframe es visible por defecto.
-         Los estilos de .invoice-modal-printable ya ocultan los botones de acción. */
-    }
-
+    body * {}
     .invoice-modal-printable, .invoice-modal-printable * {
-      visibility: visible; /* Asegura que el contenido clonado sea visible */
-      -webkit-print-color-adjust: exact !important; 
-      print-color-adjust: exact !important;
+      visibility: visible; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
     }
-
     .invoice-modal-printable {
-      position: static !important; 
-      margin: 0 auto !important; 
-      padding: 0mm; 
-      border: none !important;
-      box-shadow: none !important;
-      color: #000 !important;
-      line-height: 1.3;
-      width: 100% !important; 
-      height: auto !important;
-      min-height: 0 !important;
-      max-height: none !important;
-      overflow: visible !important; 
-      box-sizing: border-box !important;
-      page-break-before: auto;
-      page-break-after: auto;
+      position: static !important; margin: 0 auto !important; padding: 0mm; 
+      border: none !important; box-shadow: none !important; color: #000 !important;
+      line-height: 1.3; width: 100% !important; height: auto !important;
+      min-height: 0 !important; max-height: none !important; overflow: visible !important; 
+      box-sizing: border-box !important; page-break-before: auto; page-break-after: auto;
     }
-
-    .invoice-modal-printable .modal-actions-print {
-      display: none !important;
+    .invoice-modal-printable .modal-actions-print { display: none !important; }
+    .invoice-modal-printable h1, .invoice-modal-printable h2, .invoice-modal-printable h3 {
+      color: #000 !important; margin-top: 12px; margin-bottom: 8px; page-break-after: avoid;
     }
-
-    .invoice-modal-printable h1,
-    .invoice-modal-printable h2,
-    .invoice-modal-printable h3 {
-      color: #000 !important;
-      margin-top: 12px;
-      margin-bottom: 8px;
-      page-break-after: avoid;
-    }
-    .invoice-modal-printable h1 { font-size: 16pt; }
-    .invoice-modal-printable h2 { font-size: 14pt; }
-
+    .invoice-modal-printable h1 { font-size: 16pt; } .invoice-modal-printable h2 { font-size: 14pt; }
     .invoice-modal-printable .section-title-style {
-      font-size: 11pt;
-      color: #000 !important;
-      border-bottom: 1px solid #000 !important;
-      margin-top: 12px;
-      margin-bottom: 4px;
+      font-size: 11pt; color: #000 !important; border-bottom: 1px solid #000 !important;
+      margin-top: 12px; margin-bottom: 4px;
     }
-
     .invoice-modal-printable table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-      page-break-inside: auto; 
-      font-size: 8.5pt;
+      width: 100%; border-collapse: collapse; margin-top: 8px;
+      page-break-inside: auto; font-size: 8.5pt;
     }
-
-    .invoice-modal-printable table tr {
-      page-break-inside: avoid; 
-      page-break-after: auto;
-    }
-
+    .invoice-modal-printable table tr { page-break-inside: avoid; page-break-after: auto; }
     .invoice-modal-printable table th {
-      background-color: #f0f0f0 !important;
-      border: 1px solid #555 !important;
-      padding: 4px;
-      text-align: left;
-      font-weight: bold;
+      background-color: #f0f0f0 !important; border: 1px solid #555 !important;
+      padding: 4px; text-align: left; font-weight: bold;
     }
-
     .invoice-modal-printable table td {
-      border: 1px solid #555 !important;
-      padding: 3px 4px;
-      vertical-align: top;
+      border: 1px solid #555 !important; padding: 3px 4px; vertical-align: top;
     }
-
-    .invoice-modal-printable .detail-row-print strong {
-      font-weight: bold;
-    }
-
+    .invoice-modal-printable .detail-row-print strong { font-weight: bold; }
     .invoice-modal-printable .totals-section-style {
-      margin-top: 12px;
-      padding-top: 6px;
-      border-top: 1px double #000 !important;
-      font-size: 10pt;
-      page-break-before: auto; 
+      margin-top: 12px; padding-top: 6px; border-top: 1px double #000 !important;
+      font-size: 10pt; page-break-before: auto; 
     }
-
     .invoice-modal-printable .totals-section-style .detail-row-print {
-      padding: 3px 0;
-      border-bottom: 1px dotted #888;
+      padding: 3px 0; border-bottom: 1px dotted #888;
     }
-    .invoice-modal-printable .totals-section-style .detail-row-print:last-of-type {
-      border-bottom: none;
+    .invoice-modal-printable .totals-section-style .detail-row-print:last-of-type { border-bottom: none; }
+    .invoice-modal-printable .invoice-footer-message, .invoice-modal-printable .attended-by-message {
+      text-align: center; margin-top: 8px; font-size: 7.5pt;
+      page-break-inside: avoid; clear: both;
     }
-
-    .invoice-modal-printable .invoice-footer-message,
-    .invoice-modal-printable .attended-by-message {
-      text-align: center;
-      margin-top: 8px;
-      font-size: 7.5pt;
-      page-break-inside: avoid;
-      clear: both;
-    }
-    .invoice-modal-printable .invoice-footer-message {
-        margin-top: 15px;
-    }
-
+    .invoice-modal-printable .invoice-footer-message { margin-top: 15px; }
     .invoice-modal-printable .cancellation-details-print {
-      margin-top: 15px;
-      padding: 10px;
-      border: 1px dashed #888;
-      font-size: 9pt;
-      page-break-before: auto; 
+      margin-top: 15px; padding: 10px; border: 1px dashed #888;
+      font-size: 9pt; page-break-before: auto; 
     }
-    .invoice-modal-printable .cancellation-details-print p {
-      margin: 3px 0;
-    }
+    .invoice-modal-printable .cancellation-details-print p { margin: 3px 0; }
   }
 `;
 
 function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false }) {
   if (!saleData) return null;
 
+  // --- NUEVOS ESTADOS para el nombre del usuario cancelador ---
+  const [cancellerFullName, setCancellerFullName] = useState('');
+  const [loadingCancellerName, setLoadingCancellerName] = useState(false);
+
+  // --- NUEVO useEffect para obtener el nombre del usuario cancelador ---
+  useEffect(() => {
+    // Solo ejecutar si la venta está cancelada y tenemos un ID de usuario cancelador
+    if (saleData && saleData.status === 'cancelled' && saleData.cancelled_by_user_id) {
+      const fetchCancellerName = async () => {
+        setLoadingCancellerName(true);
+        setCancellerFullName(''); // Limpiar nombre previo mientras carga
+        try {
+          // Usar la nueva función del authService
+          const user = await authService.getUserDetailsById(saleData.cancelled_by_user_id);
+          if (user && user.full_name) {
+            setCancellerFullName(user.full_name);
+          } else {
+            // Si no se encuentra el usuario o no tiene full_name, mostrar el ID como fallback
+            console.warn(`No se encontró full_name para el usuario ID: ${saleData.cancelled_by_user_id}`);
+            setCancellerFullName(`ID: ${saleData.cancelled_by_user_id} (nombre no disponible)`);
+          }
+        } catch (error) {
+          // El error ya se loguea en authService
+          setCancellerFullName(`ID: ${saleData.cancelled_by_user_id} (error al cargar nombre)`);
+        } finally {
+          setLoadingCancellerName(false);
+        }
+      };
+      fetchCancellerName();
+    } else {
+      setCancellerFullName(''); // Limpiar si la venta no está cancelada o no hay ID
+    }
+  // Dependencias: re-ejecutar si cambia el estado de la venta o el ID del usuario cancelador
+  }, [saleData?.status, saleData?.cancelled_by_user_id]); 
+  // Se usa optional chaining (?.), aunque el if (!saleData) return null; al inicio ya protege.
+
   const handlePrint = () => {
-    console.log('Función handlePrint (con iframe) ejecutada.'); // Para depuración
     const printableElement = document.querySelector('.invoice-modal-printable');
     if (!printableElement) {
       console.error('Elemento .invoice-modal-printable no encontrado.');
       alert('Error: No se encontró el contenido para imprimir.');
       return;
     }
-
-    // Crear un iframe oculto
     const iframe = document.createElement('iframe');
-    iframe.style.position = 'absolute';
-    iframe.style.width = '0px'; // Sin ancho visible
-    iframe.style.height = '0px'; // Sin alto visible
-    iframe.style.border = '0';
-    iframe.style.visibility = 'hidden'; // Ocultarlo completamente
-    iframe.setAttribute('aria-hidden', 'true'); // Para accesibilidad
-
+    iframe.style.position = 'absolute'; iframe.style.width = '0px'; 
+    iframe.style.height = '0px'; iframe.style.border = '0';
+    iframe.style.visibility = 'hidden'; iframe.setAttribute('aria-hidden', 'true');
     document.body.appendChild(iframe);
-
     const doc = iframe.contentWindow.document;
     doc.open();
     doc.write('<!DOCTYPE html><html><head><title>Factura</title>');
-    // Añadir los estilos de printStyles
     doc.write(`<style type="text/css">${printStyles}</style>`);
-    // Si tienes un archivo CSS global en tu proyecto que también sea necesario para la factura,
-    // podrías enlazarlo aquí, por ejemplo:
-    // doc.write('<link rel="stylesheet" type="text/css" href="/ruta/a/tus/estilos-globales.css" media="all">');
     doc.write('</head><body></body></html>');
     doc.close();
-
-    // Clonar el contenido imprimible y añadirlo al body del iframe
-    // Clonar (true) copia el nodo y todos sus atributos y descendientes.
     const clonedPrintableElement = printableElement.cloneNode(true);
     doc.body.appendChild(clonedPrintableElement);
-    
-    iframe.contentWindow.focus(); // Necesario en algunos navegadores para que la impresión funcione
-
-    // Pequeña demora para asegurar que el contenido y los estilos se renderizan en el iframe
+    iframe.contentWindow.focus(); 
     setTimeout(() => {
       try {
         iframe.contentWindow.print();
@@ -293,30 +235,18 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
         console.error('Error al imprimir desde el iframe:', e);
         alert('Ocurrió un error al intentar imprimir. Por favor, intente de nuevo.');
       } finally {
-        // Remover el iframe después de un tiempo prudencial.
-        // Esto da tiempo a que el diálogo de impresión se procese.
         setTimeout(() => {
           if (document.body.contains(iframe)) {
             document.body.removeChild(iframe);
           }
-        }, 2000); // 2 segundos, ajustar si es necesario
+        }, 2000); 
       }
-    }, 500); // 0.5 segundos de demora para renderizado, ajustar si es necesario
+    }, 500); 
   };
 
   return (
     <>
-      {/* La etiqueta <style> con printStyles ya no es necesaria aquí si se inyecta en el iframe.
-          Sin embargo, si quieres mantener la vista previa de impresión en las herramientas de desarrollo
-          del navegador principal, puedes dejarla. Para este enfoque de iframe, es más limpio
-          que solo el iframe tenga los printStyles al momento de imprimir.
-          Por simplicidad y para evitar duplicar los estilos en el DOM principal innecesariamente
-          cuando se usa el iframe, la quitaremos de aquí.
-      */}
-      {/* <style>{printStyles}</style> */}
-
       <div style={modalOverlayStyle}>
-        {/* Es importante que el contenido original (incluyendo estilos inline) permanezca aquí para ser clonado */}
         <div style={modalContentStyle} className="invoice-modal-printable">
           <div style={headerStyle}>
             <h1>{storeConfig?.store_name || 'Recibo de Venta'}</h1>
@@ -340,7 +270,6 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
             <span>Fecha:</span> <strong>{new Date(saleData.date).toLocaleString()}</strong>
           </div>
 
-
           <div style={sectionTitleStyle} className="section-title-style">Ítems</div>
           <table style={tableStyle}>
             <thead>
@@ -353,7 +282,7 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
             </thead>
             <tbody>
               {saleData.items.map((item, index) => (
-                <tr key={index}>
+                <tr key={`${item.id}-${index}`}> {/* Usar una key más robusta si es posible */}
                   <td style={tdStyle}>{item.description}</td>
                   <td style={tdStyle}>{item.quantity}</td>
                   <td style={tdStyle}>{item.unit_price.toFixed(2)}</td>
@@ -368,7 +297,7 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
             <div style={detailRowStyle} className="detail-row-print"><span>Descuento:</span> <strong>- {saleData.discount_value.toFixed(2)}</strong></div>
             {saleData.iva_applied && (
               <div style={detailRowStyle} className="detail-row-print">
-                <span>IVA ({saleData.iva_percentage_used?.toFixed(1) || storeConfig?.iva_percentage.toFixed(1)}%):</span>
+                <span>IVA ({saleData.iva_percentage_used?.toFixed(1) || storeConfig?.iva_percentage?.toFixed(1) || 'N/A'}%):</span>
                 <strong>+ {(saleData.total_amount - (saleData.subtotal - saleData.discount_value)).toFixed(2)}</strong>
               </div>
             )}
@@ -379,13 +308,18 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
                 <span>Método de Pago:</span> <strong>{saleData.payment_method}</strong>
             </div>
           </div>
-
+          
           {saleData.status === 'cancelled' && saleData.cancellation_date && (
             <div className="cancellation-details-print" style={{ marginTop: '20px', padding: '10px', border: '1px solid #ccc', backgroundColor: '#f9f9f9' }}>
               <h3 style={{ color: 'red', fontSize: '1.1em' }}>Detalles de Cancelación:</h3>
               <p><strong>Fecha de Cancelación:</strong> {new Date(saleData.cancellation_date).toLocaleString()}</p>
               <p><strong>Motivo:</strong> {saleData.cancellation_reason}</p>
-              <p><strong>Cancelada por:</strong> {saleData.cancelled_by_user_id}</p>
+              {/* --- MODIFICACIÓN para mostrar el nombre --- */}
+              <p>
+                <strong>Cancelada por: </strong> 
+                {loadingCancellerName ? 'Cargando nombre...' : (cancellerFullName || `ID: ${saleData.cancelled_by_user_id}`)}
+              </p>
+              {/* --- FIN DE LA MODIFICACIÓN --- */}
             </div>
           )}
 
@@ -395,12 +329,9 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
             </p>
           )}
             <p className="attended-by-message" style={{ textAlign: 'center', marginTop: '5px', fontSize: '0.8em' }}>
-            Atendido por: {saleData.created_by_username}
+            Atendido por: {saleData.created_by_username || 'N/A'}
           </p>
 
-          {/* Estos botones seguirán existiendo en el modal principal, 
-              pero no se clonarán al iframe si los estilos de impresión los ocultan.
-              La clase .modal-actions-print ya tiene display:none en printStyles. */}
           <div style={actionButtonsStyle} className="modal-actions-print">
             <button onClick={handlePrint} style={{...buttonStyle, backgroundColor: '#007bff', color: 'white'}}>
               Imprimir

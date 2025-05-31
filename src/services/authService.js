@@ -19,24 +19,18 @@ const login = async (username, password) => {
     );
 
     if (response.data.access_token) {
-      console.log("Token y datos recibidos del backend:", response.data);
-      // Guardar el token y los datos del usuario en localStorage
+      // console.log("Token y datos recibidos del backend:", response.data);
       localStorage.setItem('userToken', response.data.access_token);
       localStorage.setItem('userData', JSON.stringify({
         username: response.data.username,
         role: response.data.role,
         userId: response.data.user_id 
-        // Asegúrate que 'user_id' es el nombre correcto que devuelve tu backend en el objeto token
-        // En tu backend, el endpoint /token devuelve:
-        // return {"access_token": access_token, "token_type": "bearer", "role": user["role"], "username": user["username"], "user_id": user["id"]}
-        // Así que "user_id" es correcto.
       }));
-      console.log("Token y datos de usuario guardados en localStorage.");
+      // console.log("Token y datos de usuario guardados en localStorage.");
       return response.data; 
     }
   } catch (error) {
     console.error("Error en authService.login:", error.response ? error.response.data : error.message);
-    // Limpiar cualquier token antiguo si el login falla (opcional pero buena práctica)
     localStorage.removeItem('userToken');
     localStorage.removeItem('userData');
     throw error; 
@@ -44,15 +38,12 @@ const login = async (username, password) => {
 };
 
 const logout = () => {
-  // Eliminar el token y los datos del usuario de localStorage
   localStorage.removeItem('userToken');
   localStorage.removeItem('userData');
-  console.log("Usuario deslogueado y datos borrados de localStorage.");
-  // Aquí podrías redirigir a la página de login, usualmente se maneja en el componente/contexto
+  // console.log("Usuario deslogueado y datos borrados de localStorage.");
 };
 
 const getCurrentUser = () => {
-  // Obtener los datos del usuario de localStorage
   const userDataString = localStorage.getItem('userData');
   if (userDataString) {
     try {
@@ -66,8 +57,27 @@ const getCurrentUser = () => {
 };
 
 const getToken = () => {
-  // Obtener el token de localStorage
   return localStorage.getItem('userToken');
+};
+
+const getUserDetailsById = async (userId) => {
+  if (!userId) {
+    console.warn("getUserDetailsById llamado sin userId");
+    return null;
+  }
+  try {
+    const token = getToken(); 
+    // La URL ahora incluye el prefijo '/config' que tu backend utiliza para este router
+    const response = await axios.get(`${API_URL}/config/users/${userId}`, { 
+      headers: {
+        Authorization: `Bearer ${token}` // Si el endpoint está protegido
+      }
+    });
+    return response.data; // Asume que response.data es el objeto usuario
+  } catch (error) {
+    console.error(`Error al obtener detalles del usuario ${userId} desde /config/users/${userId}:`, error.response ? error.response.data : error.message);
+    return null; // Devolver null para que el componente que llama pueda manejarlo
+  }
 };
 
 export default {
@@ -75,4 +85,5 @@ export default {
   logout,
   getCurrentUser,
   getToken,
+  getUserDetailsById,
 };

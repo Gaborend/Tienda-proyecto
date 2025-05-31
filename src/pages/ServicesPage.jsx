@@ -331,7 +331,7 @@ function ServicesPage() {
         <div style={formContainerStyle}>
           <h3>Editando Servicio: {editingService.description} (Cód: {editingService.code})</h3>
           <form onSubmit={handleUpdateServiceSubmit}>
-            <div style={formFieldStyleFullWidth}><label htmlFor="code_edit_srv">Código: (No editable)</label><input type="text" id="code_edit_srv" name="code" value={editServiceFormData.code} readOnly style={{...inputStyle, backgroundColor:'#e9ecef'}}/></div>
+            <div style={formFieldStyleFullWidth}><label htmlFor="code_edit_srv">Código: (No editable)</label><input type="text" id="code_edit_srv" name="code" value={editServiceFormData.code} readOnly style={{...inputStyle, backgroundColor:'#333'}}/></div>
             <div style={formFieldStyleFullWidth}><label htmlFor="desc_edit_srv">Descripción: *</label><textarea id="desc_edit_srv" name="description" value={editServiceFormData.description} onChange={(e)=>handleInputChange(e, setEditServiceFormData)} required rows="3" style={{...inputStyle, resize:'vertical'}}/></div>
             <div style={formFieldStyleFullWidth}><label htmlFor="val_edit_srv">Valor: *</label><input type="number" id="val_edit_srv" name="value" value={editServiceFormData.value} onChange={(e)=>handleInputChange(e, setEditServiceFormData)} required min="0" step="any" style={inputStyle}/></div>
             <div style={{...formFieldStyleFullWidth, marginTop: '10px' }}><label htmlFor="active_edit_srv" style={{marginRight:'10px'}}>Servicio Activo:</label><input type="checkbox" id="active_edit_srv" name="is_active" checked={editServiceFormData.is_active} onChange={(e)=>handleInputChange(e, setEditServiceFormData)} /></div>

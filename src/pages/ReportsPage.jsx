@@ -373,7 +373,7 @@ function ReportsPage() {
         {!loadingInventoryMovements && inventoryMovementsData.length > 0 && (
           <div style={{overflowX: 'auto', marginTop:'20px'}}>
             <table style={{ width: '100%', minWidth:'900px', borderCollapse: 'collapse', fontSize: '0.95em' }}>
-              <thead><tr><th style={tableHeaderStyle}>Fecha</th><th style={tableHeaderStyle}>ID Prod.</th><th style={tableHeaderStyle}>Cód. Prod.</th><th style={tableHeaderStyle}>Cant. Modif.</th><th style={tableHeaderStyle}>Nueva Cant.</th><th style={tableHeaderStyle}>Tipo Mov.</th><th style={tableHeaderStyle}>Usuario (ID)</th><th style={tableHeaderStyle}>Notas</th></tr></thead>
+              <thead><tr><th style={tableHeaderStyle}>Fecha</th><th style={tableHeaderStyle}>Código de Barras</th><th style={tableHeaderStyle}>Cód. Prod.</th><th style={tableHeaderStyle}>Cant. Modif.</th><th style={tableHeaderStyle}>Nueva Cant.</th><th style={tableHeaderStyle}>Tipo Mov.</th><th style={tableHeaderStyle}>Usuario (ID)</th><th style={tableHeaderStyle}>Notas</th></tr></thead>
               <tbody>{inventoryMovementsData.map((mov, index) => (<tr key={mov.id || index}> <td style={tableCellStyle}>{new Date(mov.date).toLocaleString()}</td><td style={tableCellStyle}>{mov.product_id}</td><td style={tableCellStyle}>{mov.product_code}</td><td style={{...tableCellStyle, color: mov.quantity_changed < 0 ? 'red' : 'green', fontWeight:'bold'}}>{mov.quantity_changed}</td><td style={tableCellStyle}>{mov.new_quantity}</td><td style={tableCellStyle}>{mov.movement_type}</td><td style={tableCellStyle}>{mov.user_id}</td><td style={tableCellStyle}>{mov.notes || '-'}</td></tr>))}</tbody>
             </table>
           </div>

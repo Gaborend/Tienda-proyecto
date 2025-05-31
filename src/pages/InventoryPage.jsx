@@ -283,7 +283,7 @@ const handleCreateProductSubmit = async (event) => {
   const handleSearchProductByIdSubmit = async (event) => {
     event.preventDefault();
     if (!searchIdInputProd.trim()) {
-      setSpecificProductSearchError('Por favor, ingrese un ID de producto para buscar.');
+      setSpecificProductSearchError('Por favor, ingrese un Código de Barras para buscar.');
       return;
     }
     resetFormsAndViews(); 
@@ -292,7 +292,7 @@ const handleCreateProductSubmit = async (event) => {
       const data = await inventoryService.getProductById(searchIdInputProd);
       setFoundProduct(data);
     } catch (err) {
-      setSpecificProductSearchError(`Error al buscar producto por ID ${searchIdInputProd}: ` + (err.detail || err.message || 'Producto no encontrado.'));
+      setSpecificProductSearchError(`Error al buscar producto por Código de Barras ${searchIdInputProd}: ` + (err.detail || err.message || 'Producto no encontrado.'));
       setFoundProduct(null); 
     } finally {
       setLoadingSpecificProductSearch(false);
@@ -363,11 +363,11 @@ const handleCreateProductSubmit = async (event) => {
           <h4>Buscar Producto Específico</h4>
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
             <form onSubmit={handleSearchProductByIdSubmit} style={{ flex: 1, minWidth: '250px' }}>
-              <label htmlFor="searchIdInputProd" style={{ display: 'block', marginBottom: '5px' }}>Buscar por ID:</label>
+              <label htmlFor="searchIdInputProd" style={{ display: 'block', marginBottom: '5px' }}>Código de Barra</label>
               <div style={{ display: 'flex' }}>
                 <input type="number" id="searchIdInputProd" value={searchIdInputProd} 
                        onChange={(e) => setSearchIdInputProd(e.target.value)} 
-                       placeholder="ID del producto" style={inputStyle} />
+                       placeholder="Escanea o ingresa Código de Barras" style={inputStyle} />
                 <button type="submit" disabled={loadingSpecificProductSearch} style={{ padding: '8px 15px', marginLeft: '10px' }}>Buscar</button>
               </div>
             </form>
@@ -388,7 +388,7 @@ const handleCreateProductSubmit = async (event) => {
       {displayMode === 'foundProduct' && foundProduct && (
         <div style={{ border: '1px solid #28a745', padding: '20px', marginBottom: '30px', borderRadius: '5px' }}>
           <h3>Producto Encontrado</h3>
-          <p><strong>ID:</strong> {foundProduct.id}</p>
+          <p><strong>Código de barras</strong> {foundProduct.id}</p>
           <p><strong>Código:</strong> {foundProduct.code}</p>
           <p><strong>Descripción:</strong> {foundProduct.description}</p>
           <p><strong>Marca:</strong> {foundProduct.brand || '-'}</p>
@@ -412,7 +412,7 @@ const handleCreateProductSubmit = async (event) => {
           <h3>Registrar Nuevo Producto</h3>
           <form onSubmit={handleCreateProductSubmit}>
             <div style={formRowStyle}><div style={formFieldStyle}><label htmlFor="code_new">Código Interno: *</label><input type="text" id="code_new" name="code" value={newProduct.code} onChange={(e) => handleInputChange(e, setNewProduct)} required style={inputStyle} /></div><div style={{...formFieldStyle, flex: 2}}><label htmlFor="description_new">Descripción: *</label><input type="text" id="description_new" name="description" value={newProduct.description} onChange={(e) => handleInputChange(e, setNewProduct)} required style={inputStyle} /></div></div>
-            <div style={formRowStyle}><div style={formFieldStyle}><label htmlFor="brand_new">Marca:</label><input type="text" id="brand_new" name="brand" value={newProduct.brand} onChange={(e) => handleInputChange(e, setNewProduct)} style={inputStyle} /></div><div style={formFieldStyle}><label htmlFor="category_new">Categoría:</label><input type="text" id="category_new" name="category" value={newProduct.category} onChange={(e) => handleInputChange(e, setNewProduct)} style={inputStyle} /></div></div>
+            <div style={formRowStyle}><div style={formFieldStyle}><label htmlFor="brand_new">Marca:*</label><input type="text" id="brand_new" name="brand" value={newProduct.brand} onChange={(e) => handleInputChange(e, setNewProduct)} style={inputStyle} /></div><div style={formFieldStyle}><label htmlFor="category_new">Categoría:*</label><input type="text" id="category_new" name="category" value={newProduct.category} onChange={(e) => handleInputChange(e, setNewProduct)} style={inputStyle} /></div></div>
             <div style={formRowStyle}><div style={formFieldStyle}><label htmlFor="quantity_new">Cantidad Inicial: *</label><input type="number" id="quantity_new" name="quantity" value={newProduct.quantity} onChange={(e) => handleInputChange(e, setNewProduct)} required min="0" style={inputStyle} /></div><div style={formFieldStyle}><label htmlFor="cost_value_new">Valor Costo: *</label><input type="number" id="cost_value_new" name="cost_value" value={newProduct.cost_value} onChange={(e) => handleInputChange(e, setNewProduct)} required min="0" step="any" style={inputStyle} /></div><div style={formFieldStyle}><label htmlFor="sale_value_new">Valor Venta: *</label><input type="number" id="sale_value_new" name="sale_value" value={newProduct.sale_value} onChange={(e) => handleInputChange(e, setNewProduct)} required min="0" step="any" style={inputStyle} /></div></div>
             <button type="submit" disabled={loadingCreate} style={submitButtonStyle}>{loadingCreate ? 'Guardando...' : 'Guardar Producto'}</button>
           </form>
@@ -423,8 +423,8 @@ const handleCreateProductSubmit = async (event) => {
         <div style={formContainerStyle}>
           <h3>Editando Producto: {editingProduct.description} (Código: {editingProduct.code})</h3>
           <form onSubmit={handleUpdateProductDetailsSubmit}>
-            <div style={formRowStyle}><div style={formFieldStyle}><label htmlFor="edit_code">Código Interno: (No editable)</label><input type="text" id="edit_code" name="code" value={editProductFormData.code} readOnly style={{...inputStyle, backgroundColor: '#e9ecef'}} /></div><div style={{...formFieldStyle, flex: 2}}><label htmlFor="edit_description">Descripción: *</label><input type="text" id="edit_description" name="description" value={editProductFormData.description} onChange={(e) => handleInputChange(e, setEditProductFormData)} required style={inputStyle} /></div></div>
-            <div style={formRowStyle}><div style={formFieldStyle}><label htmlFor="edit_brand">Marca:</label><input type="text" id="edit_brand" name="brand" value={editProductFormData.brand} onChange={(e) => handleInputChange(e, setEditProductFormData)} style={inputStyle} /></div><div style={formFieldStyle}><label htmlFor="edit_category">Categoría:</label><input type="text" id="edit_category" name="category" value={editProductFormData.category} onChange={(e) => handleInputChange(e, setEditProductFormData)} style={inputStyle} /></div></div>
+            <div style={formRowStyle}><div style={formFieldStyle}><label htmlFor="edit_code">Código Interno: (No editable)</label><input type="text" id="edit_code" name="code" value={editProductFormData.code} readOnly style={{...inputStyle, backgroundColor: '#333'}} /></div><div style={{...formFieldStyle, flex: 2}}><label htmlFor="edit_description">Descripción: *</label><input type="text" id="edit_description" name="description" value={editProductFormData.description} onChange={(e) => handleInputChange(e, setEditProductFormData)} required style={inputStyle} /></div></div>
+            <div style={formRowStyle}><div style={formFieldStyle}><label htmlFor="edit_brand">Marca:*</label><input type="text" id="edit_brand" name="brand" value={editProductFormData.brand} onChange={(e) => handleInputChange(e, setEditProductFormData)} style={inputStyle} /></div><div style={formFieldStyle}><label htmlFor="edit_category">Categoría:*</label><input type="text" id="edit_category" name="category" value={editProductFormData.category} onChange={(e) => handleInputChange(e, setEditProductFormData)} style={inputStyle} /></div></div>
             <div style={formRowStyle}><div style={formFieldStyle}><label htmlFor="edit_cost_value">Valor de Costo: *</label><input type="number" id="edit_cost_value" name="cost_value" value={editProductFormData.cost_value} onChange={(e) => handleInputChange(e, setEditProductFormData)} required min="0" step="any" style={inputStyle} /></div><div style={formFieldStyle}><label htmlFor="edit_sale_value">Valor de Venta: *</label><input type="number" id="edit_sale_value" name="sale_value" value={editProductFormData.sale_value} onChange={(e) => handleInputChange(e, setEditProductFormData)} required min="0" step="any" style={inputStyle} /></div></div>
             <div style={{ marginBottom: '15px' }}><label htmlFor="edit_is_active" style={{ marginRight: '10px' }}>Producto Activo:</label><input type="checkbox" id="edit_is_active" name="is_active" checked={editProductFormData.is_active} onChange={(e) => handleInputChange(e, setEditProductFormData)} /></div>
             <div style={{display: 'flex', gap: '10px', marginTop: '15px'}}><button type="submit" disabled={loadingEditProduct} style={submitButtonStyle}>{loadingEditProduct ? 'Actualizando...' : 'Actualizar Detalles'}</button><button type="button" onClick={handleCancelEditProduct} style={cancelButtonStyle}>Cancelar</button></div>
@@ -470,7 +470,7 @@ const handleCreateProductSubmit = async (event) => {
           {!loading && !error && products.length === 0 && <p>No hay productos registrados.</p>}
           {!loading && !error && products.length > 0 && (
             <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
-              <thead><tr><th style={tableHeaderStyle}>ID</th><th style={tableHeaderStyle}>Código</th><th style={tableHeaderStyle}>Descripción</th><th style={tableHeaderStyle}>Marca</th><th style={tableHeaderStyle}>Categoría</th><th style={tableHeaderStyle}>Cant.</th><th style={tableHeaderStyle}>V. Costo</th><th style={tableHeaderStyle}>V. Venta</th><th style={tableHeaderStyle}>Estado</th>{canManage && <th style={tableHeaderStyle}>Acciones</th>}</tr></thead>
+              <thead><tr><th style={tableHeaderStyle}>Código de Barras</th><th style={tableHeaderStyle}>Código</th><th style={tableHeaderStyle}>Descripción</th><th style={tableHeaderStyle}>Marca</th><th style={tableHeaderStyle}>Categoría</th><th style={tableHeaderStyle}>Cant.</th><th style={tableHeaderStyle}>V. Costo</th><th style={tableHeaderStyle}>V. Venta</th><th style={tableHeaderStyle}>Estado</th>{canManage && <th style={tableHeaderStyle}>Acciones</th>}</tr></thead>
               <tbody>
                 {products.map(product => (
                   <tr key={product.id}>

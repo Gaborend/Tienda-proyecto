@@ -30,3 +30,4 @@ id,timestamp,user_id_performing_action,username_performing_action,action_type,ta
 34,2025-05-30T22:55:10.909663+00:00,1,soporte,USER_CREATED,user,9.0,"{""username"": ""Cajero7"", ""role"": ""caja"", ""full_name"": ""Cajero prueba"", ""email"": null, ""is_active"": true}"
 35,2025-05-30T23:56:53.910548+00:00,1,soporte,USER_CREATED,user,8.0,"{""username"": ""cajero6"", ""role"": ""caja"", ""full_name"": ""Bryan Alejan"", ""email"": ""caje@tienda.com"", ""is_active"": true}"
 36,2025-05-31T21:21:18.214496+00:00,1,soporte,STORE_SETTINGS_UPDATED,store_config,,"{""iva_percentage"": {""old"": 20.0, ""new"": 19.0}}"
+37,2025-05-31T23:05:13.702047+00:00,1,soporte,USER_CREATED,user,8,"{""username"": ""admin1"", ""role"": ""admin"", ""full_name"": ""Bryan Ruiz"", ""email"": null, ""is_active"": true}"

@@ -531,3 +531,48 @@ def get_store_settings_sync() -> StoreConfig:
     except (FileNotFoundError, json.JSONDecodeError, Exception) as e:
         # Loggear el error 'e'
         raise HTTPException(status_code=500, detail=f"Error al leer la configuración de la tienda: {e}")
+    
+@router.get("/users/{user_id_to_fetch}", response_model=UserResponse, tags=["users"])
+async def read_user_details_by_id(
+    user_id_to_fetch: int,
+    # Considera añadir una dependencia de autenticación si quieres proteger este endpoint:
+    # current_requesting_user: Dict[str, Any] = Depends(get_current_active_user) 
+):
+    """
+    Obtiene los detalles de un usuario específico por su ID.
+    """
+    # Asegúrate que USERS_FILE y UserResponse estén definidos y accesibles aquí
+    users_df = load_df(USERS_FILE, columns=["id", "username", "hashed_password", "full_name", "email", "role", "is_active"])
+    if users_df.empty:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay usuarios registrados")
+
+    # Búsqueda robusta del ID
+    df_id_as_numeric = pd.to_numeric(users_df["id"], errors='coerce')
+    user_record_series = users_df[df_id_as_numeric == user_id_to_fetch]
+
+    if user_record_series.empty:
+        user_record_series = users_df[users_df["id"].astype(str) == str(user_id_to_fetch)]
+        if user_record_series.empty:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Usuario con ID {user_id_to_fetch} no encontrado.")
+
+    user_data_dict = user_record_series.iloc[0].to_dict()
+    user_response_data = {k: v for k, v in user_data_dict.items() if k != "hashed_password"}
+
+    if 'email' in user_response_data:
+        if pd.isna(user_response_data['email']) or str(user_response_data['email']).strip() == '':
+            user_response_data['email'] = None
+    
+    if 'id' in user_response_data:
+        try:
+            user_response_data['id'] = int(float(str(user_response_data['id'])))
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=500, detail=f"ID de usuario inválido en los datos almacenados: {user_response_data['id']}")
+
+    if 'is_active' in user_response_data:
+        val = user_response_data['is_active']
+        if isinstance(val, str):
+            user_response_data['is_active'] = val.lower() == 'true' or val == '1'
+        else:
+            user_response_data['is_active'] = bool(val)
+            
+    return UserResponse(**user_response_data)

@@ -4,6 +4,24 @@ import { Link } from 'react-router-dom';
 import customerService from '../services/customerService';
 import authService from '../services/authService';
 
+// --- ESTILOS DEFINIDOS ARRIBA PARA CONSISTENCIA (Inspirados en ServicesPage y adaptados) ---
+const pageOverallStyle = { padding: '20px', fontFamily: 'Arial, sans-serif', color: 'white' };
+const formSectionBoxStyle = { border: '1px solid #444', backgroundColor: '#222', padding: '20px', marginBottom: '25px', borderRadius: '8px' };
+const formFieldStyle = { display: 'flex', flexDirection: 'column', marginBottom: '16px' };
+const formFieldHorizontalAlignStyle = { display: 'flex', flexDirection: 'row', alignItems: 'center', marginBottom: '16px'};
+const formLabelStyle = { display: 'block', marginBottom: '6px', fontWeight: 'bold', fontSize: '0.95em' };
+const formInputStyle = { width: '100%', padding: '10px', boxSizing: 'border-box', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#333', color: 'white'};
+const formSelectStyle = { ...formInputStyle }; // Hereda de formInputStyle, ajusta si es necesario
+const formButtonStyle = { padding: '10px 15px', cursor: 'pointer', border: 'none', borderRadius: '4px', color: 'white', fontSize: '0.95em', // Estilo base para botones
+}; 
+// Estilo específico para el contenedor del checkbox y su etiqueta, para alineación horizontal
+const formCheckboxContainerStyle = { ...formFieldHorizontalAlignStyle, marginTop: '5px' }; // Reutiliza el estilo horizontal
+const formCheckboxLabelStyle = { marginRight: '10px', fontWeight:'bold', fontSize: '0.95em' }; // Etiqueta del checkbox
+const formCheckboxInputStyle = { transform: 'scale(1.2)', cursor: 'pointer', marginRight: '5px', verticalAlign: 'middle' }; // Estilo para el input checkbox
+
+const tableHeaderStyle = { borderBottom: '2px solid #555', padding: '10px', textAlign: 'left', color: '#ddd' };
+const tableCellStyle = { borderBottom: '1px solid #444', padding: '10px', verticalAlign: 'middle' };
+
 function CustomersPage() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -16,6 +34,8 @@ function CustomersPage() {
   });
   const [createError, setCreateError] = useState('');
   const [createSuccess, setCreateSuccess] = useState('');
+  const [loadingCreate, setLoadingCreate] = useState(false);
+
 
   const [editingCustomer, setEditingCustomer] = useState(null); 
   const [editFormData, setEditFormData] = useState({
@@ -33,14 +53,15 @@ function CustomersPage() {
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [historyError, setHistoryError] = useState('');
 
-  // <<< --- Estados para Búsqueda Específica (NUEVO) --- >>>
-  const [searchIdInput, setSearchIdInput] = useState('');
+  const [searchNameInput, setSearchNameInput] = useState('');
+  const [foundCustomers, setFoundCustomers] = useState([]); 
+  const [nameSearchError, setNameSearchError] = useState('');
+  const [loadingNameSearch, setLoadingNameSearch] = useState(false); 
+  
   const [searchDocTypeInput, setSearchDocTypeInput] = useState('CC');
   const [searchDocNumberInput, setSearchDocNumberInput] = useState('');
-  const [foundCustomer, setFoundCustomer] = useState(null); // Cliente encontrado por búsqueda específica
-  const [specificSearchError, setSpecificSearchError] = useState('');
-  const [loadingSpecificSearch, setLoadingSpecificSearch] = useState(false);
-  // <<< --- Fin Estados para Búsqueda Específica --- >>>
+  const [docSearchError, setDocSearchError] = useState('');
+  const [loadingDocSearch, setLoadingDocSearch] = useState(false);
 
   const currentUser = authService.getCurrentUser();
   const userRole = currentUser ? currentUser.role : null;
@@ -52,32 +73,48 @@ function CustomersPage() {
     }
   }, [isAdminOrSoporte]);
 
-  const fetchCustomers = async () => {
+  const fetchCustomers = async (params = {}) => {
     setLoading(true);
     setError('');
     try {
-      const data = await customerService.getCustomers(); 
-      setCustomers(data);
+      const data = await customerService.getCustomers(params); 
+      if (params.search || (params.document_type && params.document_number)) { 
+        setFoundCustomers(data || []);
+      } else { 
+        setCustomers(data || []);
+      }
     } catch (err) {
-      setError('Error al cargar la lista de clientes. ' + (err.detail || err.message || ''));
+      const errorMsg = 'Error al cargar clientes: ' + (err.detail || err.message || '');
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
-  // Asumimos que estas funciones ya las tienes completas y funcionales de nuestras interacciones previas:
   const handleNewCustomerChange = (event) => {
     const { name, value } = event.target;
-    setNewCustomer(prev => ({ ...prev, [name]: value }));
+    let processedValue = value;
+
+    if (name === 'document_number') {
+      processedValue = value.replace(/\s+/g, '');
+    } else if (name === 'phone') {
+      processedValue = value.replace(/\s+/g, '').slice(0, 15); 
+    }
+    setNewCustomer(prev => ({ ...prev, [name]: processedValue }));
   };
 
   const handleCreateCustomerSubmit = async (event) => {
     event.preventDefault();
-    setCreateError(''); setCreateSuccess('');
+    setCreateError(''); setCreateSuccess(''); setLoadingCreate(true);
     if (!newCustomer.full_name || !newCustomer.document_type || !newCustomer.document_number || !newCustomer.phone) {
-      setCreateError('Por favor, completa todos los campos obligatorios: Nombre, Tipo y N° Documento, Teléfono.'); return;
+      setCreateError('Por favor, completa todos los campos obligatorios: Nombre, Tipo y N° Documento, Teléfono.'); 
+      setLoadingCreate(false); return;
     }
-    const customerDataToSend = { ...newCustomer, email: newCustomer.email === '' ? null : newCustomer.email, address: newCustomer.address === '' ? null : newCustomer.address };
+    const customerDataToSend = { 
+      ...newCustomer, 
+      email: newCustomer.email.trim() === '' ? null : newCustomer.email, 
+      address: newCustomer.address.trim() === '' ? null : newCustomer.address 
+    };
     try {
       await customerService.createCustomer(customerDataToSend);
       setCreateSuccess('¡Cliente creado exitosamente!');
@@ -91,19 +128,38 @@ function CustomersPage() {
       else if (err.detail) { errorMessage += JSON.stringify(err.detail); } 
       else { errorMessage += err.message || JSON.stringify(err); }
       setCreateError(errorMessage); setTimeout(() => setCreateError(''), 7000);
+    } finally {
+      setLoadingCreate(false);
     }
   };
 
   const handleEditClick = (customer) => {
     setEditingCustomer(customer);
-    setEditFormData({ id: customer.id, full_name: customer.full_name || '', document_type: customer.document_type || 'CC', document_number: customer.document_number || '', phone: customer.phone || '', email: customer.email || '', address: customer.address || '', is_active: customer.is_active === undefined ? true : customer.is_active });
-    setShowCreateForm(false); setSelectedCustomerForHistory(null); setFoundCustomer(null); // Ocultar otras vistas
+    setEditFormData({ 
+      id: customer.id, 
+      full_name: customer.full_name || '', 
+      document_type: customer.document_type || 'CC', 
+      document_number: customer.document_number || '', 
+      phone: customer.phone || '', 
+      email: customer.email || '', 
+      address: customer.address || '', 
+      is_active: customer.is_active === undefined ? true : customer.is_active 
+    });
+    setShowCreateForm(false); setSelectedCustomerForHistory(null); setFoundCustomers([]); 
+    setNameSearchError(''); setDocSearchError('');
     setEditError(''); setEditSuccess('');
   };
 
   const handleEditFormChange = (event) => {
     const { name, value, type, checked } = event.target;
-    setEditFormData(prev => ({ ...prev, [name]: type === 'checkbox' ? checked : value }));
+    let processedValue = type === 'checkbox' ? checked : value;
+
+    if (name === 'document_number') {
+      processedValue = value.replace(/\s+/g, '');
+    } else if (name === 'phone') {
+      processedValue = value.replace(/\s+/g, '').slice(0, 15); 
+    }
+    setEditFormData(prev => ({ ...prev, [name]: processedValue }));
   };
 
   const handleCancelEdit = () => {
@@ -120,12 +176,17 @@ function CustomersPage() {
     if (!updateDataPayload.full_name || !updateDataPayload.document_type || !updateDataPayload.document_number || !updateDataPayload.phone) {
       setEditError('Por favor, completa todos los campos obligatorios: Nombre, Tipo y N° Documento, Teléfono.'); setLoadingEdit(false); return;
     }
-    if (updateDataPayload.email === '') { updateDataPayload.email = null; }
-    if (updateDataPayload.address === '') { updateDataPayload.address = null; }
+    if (updateDataPayload.email.trim() === '') { updateDataPayload.email = null; }
+    if (updateDataPayload.address.trim() === '') { updateDataPayload.address = null; }
     try {
       await customerService.updateCustomer(id, updateDataPayload);
       setEditSuccess('¡Cliente actualizado exitosamente!');
-      setEditingCustomer(null); fetchCustomers();
+      setEditingCustomer(null); 
+      const wasEditingFoundCustomer = foundCustomers.some(c => c.id === id);
+      fetchCustomers(); 
+      if (wasEditingFoundCustomer) { 
+        clearSpecificSearches(false); 
+      }
       setTimeout(() => setEditSuccess(''), 3000);
     } catch (err) {
       let errorMessage = 'Error al actualizar cliente: ';
@@ -137,11 +198,15 @@ function CustomersPage() {
   };
 
   const handleInactivateClick = async (customerId, customerName) => {
-    setInactivateMessage('');
+     setInactivateMessage('');
     if (window.confirm(`¿Estás seguro de que deseas inactivar al cliente "${customerName}" (ID: ${customerId})?`)) {
       try {
         await customerService.inactivateCustomer(customerId);
-        setInactivateMessage(`Cliente "${customerName}" inactivado correctamente.`); fetchCustomers();
+        setInactivateMessage(`Cliente "${customerName}" inactivado correctamente.`); 
+        fetchCustomers(); 
+        if (foundCustomers.some(c => c.id === customerId)) { 
+            setFoundCustomers(prev => prev.map(c => c.id === customerId ? {...c, is_active: false} : c));
+        }
         setTimeout(() => setInactivateMessage(''), 3000);
       } catch (err) {
         setInactivateMessage('Error al inactivar cliente: ' + (err.detail || err.message || JSON.stringify(err)));
@@ -155,7 +220,8 @@ function CustomersPage() {
     setLoadingHistory(true);
     setHistoryError('');
     setCustomerHistory([]); 
-    setShowCreateForm(false); setEditingCustomer(null); setFoundCustomer(null); // Ocultar otras vistas
+    setShowCreateForm(false); setEditingCustomer(null); setFoundCustomers([]); 
+    setNameSearchError(''); setDocSearchError('');
     try {
       const historyData = await customerService.getCustomerHistory(customer.id);
       setCustomerHistory(historyData);
@@ -166,81 +232,126 @@ function CustomersPage() {
     }
   };
 
-  // <<< --- Funciones para Búsqueda Específica (NUEVO) --- >>>
-  const handleSearchByIdSubmit = async (event) => {
+  const handleSearchNameChange = (e) => {
+    setSearchNameInput(e.target.value);
+    if (nameSearchError) setNameSearchError('');
+    if (docSearchError) setDocSearchError(''); 
+  };
+
+  const handleSearchDocTypeChange = (e) => {
+    setSearchDocTypeInput(e.target.value);
+    if (docSearchError) setDocSearchError('');
+    if (nameSearchError) setNameSearchError('');
+  };
+  
+  const handleSearchDocNumberChange = (e) => {
+    const { value } = e.target;
+    const sanitizedValue = value.replace(/\s+/g, '');
+    setSearchDocNumberInput(sanitizedValue);
+    if (docSearchError) setDocSearchError('');
+    if (nameSearchError) setNameSearchError('');
+  };
+
+  const handleSearchByNameSubmit = async (event) => {
     event.preventDefault();
-    if (!searchIdInput.trim()) {
-      setSpecificSearchError('Por favor, ingrese un ID para buscar.');
+    if (!searchNameInput.trim()) {
+      setNameSearchError('Por favor, ingrese un nombre para buscar.');
+      setTimeout(() => setNameSearchError(''), 3000); 
       return;
     }
-    setLoadingSpecificSearch(true);
-    setSpecificSearchError('');
-    setFoundCustomer(null);
+    setLoadingNameSearch(true);
+    setNameSearchError(''); setDocSearchError(''); 
+    setFoundCustomers([]);
     setShowCreateForm(false); setEditingCustomer(null); setSelectedCustomerForHistory(null);
     try {
-      const data = await customerService.getCustomer(searchIdInput);
-      setFoundCustomer(data);
+      const data = await customerService.getCustomers({ search: searchNameInput, limit: 20 });
+      setFoundCustomers(data || []);
+      if (!data || data.length === 0) {
+        const errorMsg = `No se encontraron clientes con el nombre: "${searchNameInput}".`;
+        setNameSearchError(errorMsg);
+        setTimeout(() => setNameSearchError(''), 3000); 
+      }
     } catch (err) {
-      setSpecificSearchError(`Error al buscar cliente por ID ${searchIdInput}: ` + (err.detail || err.message || 'Cliente no encontrado.'));
-      setFoundCustomer(null); // Asegurar que no haya un cliente encontrado previo si hay error
+      const errorMsg = `Error al buscar cliente por nombre: ` + (err.detail || err.message || 'Error desconocido.');
+      setNameSearchError(errorMsg);
+      setFoundCustomers([]);
+      setTimeout(() => setNameSearchError(''), 3000); 
     } finally {
-      setLoadingSpecificSearch(false);
+      setLoadingNameSearch(false);
     }
   };
 
   const handleSearchByDocumentSubmit = async (event) => {
     event.preventDefault();
     if (!searchDocTypeInput.trim() || !searchDocNumberInput.trim()) {
-      setSpecificSearchError('Por favor, ingrese tipo y número de documento para buscar.');
+      setDocSearchError('Por favor, ingrese tipo y número de documento para buscar.');
+      setTimeout(() => setDocSearchError(''), 3000); 
       return;
     }
-    setLoadingSpecificSearch(true);
-    setSpecificSearchError('');
-    setFoundCustomer(null);
+    setLoadingDocSearch(true);
+    setDocSearchError(''); setNameSearchError(''); 
+    setFoundCustomers([]); 
     setShowCreateForm(false); setEditingCustomer(null); setSelectedCustomerForHistory(null);
     try {
       const data = await customerService.getCustomerByDocument(searchDocTypeInput, searchDocNumberInput);
-      setFoundCustomer(data);
-    } catch (err) {
-      setSpecificSearchError(`Error al buscar cliente por documento: ` + (err.detail || err.message || 'Cliente no encontrado.'));
-      setFoundCustomer(null); // Asegurar que no haya un cliente encontrado previo si hay error
+      if (data) { 
+        setFoundCustomers([data]);
+      } else { 
+        setFoundCustomers([]);
+        const errorMsg = `No se encontró cliente con el documento: ${searchDocTypeInput} ${searchDocNumberInput}.`;
+        setDocSearchError(errorMsg);
+        setTimeout(() => setDocSearchError(''), 3000); 
+      }
+    } catch (err) { 
+      const errorMsg = `Error al buscar cliente por documento: ` + (err.detail || err.message || 'Cliente no encontrado.');
+      setDocSearchError(errorMsg);
+      setFoundCustomers([]);
+      setTimeout(() => setDocSearchError(''), 3000); 
     } finally {
-      setLoadingSpecificSearch(false);
+      setLoadingDocSearch(false);
     }
   };
 
-  const clearSpecificSearch = () => {
-    setFoundCustomer(null);
-    setSpecificSearchError('');
-    setSearchIdInput('');
+  const clearSpecificSearches = (reloadFullList = true) => { 
+    setFoundCustomers([]);
+    setNameSearchError('');
+    setDocSearchError('');
+    setSearchNameInput('');
     setSearchDocTypeInput('CC');
     setSearchDocNumberInput('');
+    if (reloadFullList && isAdminOrSoporte) {
+        fetchCustomers(); 
+    } else if (!isAdminOrSoporte) {
+        setCustomers([]); 
+    }
   };
-  // <<< --- Fin Funciones para Búsqueda Específica --- >>>
 
-  // Lógica para determinar qué vista principal mostrar
-  const showMainListView = isAdminOrSoporte && !showCreateForm && !editingCustomer && !selectedCustomerForHistory && !foundCustomer;
-  const showCreateView = showCreateForm && !editingCustomer && !selectedCustomerForHistory && !foundCustomer;
-  const showEditView = editingCustomer && !selectedCustomerForHistory && !foundCustomer;
-  const showHistoryView = selectedCustomerForHistory && !foundCustomer;
-  const showFoundCustomerView = foundCustomer;
+  const showMainListView = isAdminOrSoporte && !showCreateForm && !editingCustomer && !selectedCustomerForHistory && foundCustomers.length === 0;
+  const showCreateView = showCreateForm && !editingCustomer && !selectedCustomerForHistory && foundCustomers.length === 0;
+  const showEditView = editingCustomer && !selectedCustomerForHistory && foundCustomers.length === 0;
+  const showHistoryView = selectedCustomerForHistory && foundCustomers.length === 0;
+  const showFoundCustomersView = foundCustomers.length > 0;
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div style={pageOverallStyle}>
       <div style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to="/dashboard"><button style={{ padding: '8px 15px', fontSize: '14px' }}>← Volver al Dashboard</button></Link>
-        {/* Botón de crear solo visible si ninguna otra acción principal (editar, historial, búsqueda específica) está activa */}
-        {!editingCustomer && !selectedCustomerForHistory && !foundCustomer && (
+        <Link to="/dashboard"><button style={{ ...formButtonStyle, backgroundColor: '#6c757d', padding: '8px 15px', fontSize: '14px' }}>← Volver</button></Link>
+        {!editingCustomer && !selectedCustomerForHistory && foundCustomers.length === 0 && (
           <button 
             onClick={() => { 
-              setShowCreateForm(!showCreateForm); 
+              const newShowState = !showCreateForm;
+              setShowCreateForm(newShowState); 
               setCreateError(''); setCreateSuccess('');
-              // Asegurar que otros estados se reseteen si se abre el form de creación
               setEditingCustomer(null); 
               setSelectedCustomerForHistory(null);
-              setFoundCustomer(null);
+              setFoundCustomers([]); 
+              setNameSearchError(''); 
+              setDocSearchError('');   
+              if (!newShowState && customers.length === 0 && isAdminOrSoporte) { 
+                  fetchCustomers();
+              }
             }}
-            style={{ padding: '10px 15px', backgroundColor: showCreateForm ? '#6c757d' : '#007bff', color: 'white', border: 'none', borderRadius: '4px' }}
+            style={{ ...formButtonStyle, backgroundColor: showCreateForm ? '#dc3545' : '#007bff' }}
           >
             {showCreateForm ? 'Cancelar Creación' : 'Registrar Nuevo Cliente'}
           </button>
@@ -249,132 +360,181 @@ function CustomersPage() {
 
       <h2>Gestión de Clientes</h2>
       
-      {createSuccess && <p style={{ color: 'green' }}>{createSuccess}</p>}
-      {createError && <p style={{ color: 'red', whiteSpace: 'pre-wrap' }}>{createError}</p>}
-      {editSuccess && <p style={{ color: 'green' }}>{editSuccess}</p>}
-      {editError && <p style={{ color: 'red', whiteSpace: 'pre-wrap' }}>{editError}</p>}
-      {inactivateMessage && <p style={{ color: inactivateMessage.startsWith('Error') ? 'red' : 'green' }}>{inactivateMessage}</p>}
-      {specificSearchError && <p style={{ color: 'red' }}>{specificSearchError}</p>}
+      {createSuccess && <p style={{ color: 'lightgreen', textAlign: 'center' }}>{createSuccess}</p>}
+      {createError && <p style={{ color: '#ff7b7b', whiteSpace: 'pre-wrap', textAlign: 'center' }}>{createError}</p>}
+      {editSuccess && <p style={{ color: 'lightgreen', textAlign: 'center' }}>{editSuccess}</p>}
+      {editError && <p style={{ color: '#ff7b7b', whiteSpace: 'pre-wrap', textAlign: 'center' }}>{editError}</p>}
+      {inactivateMessage && <p style={{ color: inactivateMessage.startsWith('Error') ? '#ff7b7b' : 'lightgreen', textAlign: 'center' }}>{inactivateMessage}</p>}
+      
+      {nameSearchError && <p style={{ color: '#ff7b7b', textAlign: 'center' }}>{nameSearchError}</p>}
+      {docSearchError && <p style={{ color: '#ff7b7b', textAlign: 'center' }}>{docSearchError}</p>}
 
-      {/* Formularios de Búsqueda Específica (Solo para Admin/Soporte, y si no se muestra otra vista principal) */}
-      {isAdminOrSoporte && !showCreateView && !showEditView && !showHistoryView && !showFoundCustomerView && (
-        <div style={{ border: '1px solid #444', padding: '15px', marginBottom: '20px', borderRadius: '5px' }}>
+      {isAdminOrSoporte && !showCreateView && !showEditView && !showHistoryView && !showFoundCustomersView && (
+        <div style={formSectionBoxStyle}>
           <h4>Buscar Cliente Específico</h4>
-          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-            <form onSubmit={handleSearchByIdSubmit} style={{ flex: 1, minWidth: '250px' }}>
-              <label htmlFor="searchIdInput" style={{ display: 'block', marginBottom: '5px' }}>Buscar por ID:</label>
-              <div style={{ display: 'flex' }}>
-                <input type="number" id="searchIdInput" value={searchIdInput} onChange={(e) => setSearchIdInput(e.target.value)} placeholder="ID del cliente" style={{ padding: '8px', flexGrow: 1, boxSizing: 'border-box' }} />
-                <button type="submit" disabled={loadingSpecificSearch} style={{ padding: '8px 15px', marginLeft: '10px' }}>Buscar</button>
+          <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: '15px' }}>
+            <form onSubmit={handleSearchByNameSubmit} style={{ flex: 1, minWidth: '250px' }}>
+              <div style={formFieldStyle}>
+                <label htmlFor="searchNameInput" style={formLabelStyle}>Buscar por Nombre:</label>
+                <div style={{ display: 'flex' }}>
+                  <input type="text" id="searchNameInput" value={searchNameInput} onChange={handleSearchNameChange} placeholder="Nombre del cliente" style={{...formInputStyle, marginBottom:0, flexGrow: 1}} />
+                  <button type="submit" disabled={loadingNameSearch} style={{ ...formButtonStyle, backgroundColor: '#007bff', padding: '10px', marginLeft: '10px' }}>
+                    {loadingNameSearch ? 'Buscando...' : 'Buscar'}
+                  </button>
+                </div>
               </div>
             </form>
-            <form onSubmit={handleSearchByDocumentSubmit} style={{ flex: 2, minWidth: '300px' }}>
-              <label style={{ display: 'block', marginBottom: '5px' }}>Buscar por Documento:</label>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <select value={searchDocTypeInput} onChange={(e) => setSearchDocTypeInput(e.target.value)} style={{ padding: '8px', boxSizing: 'border-box' }}>
-                  <option value="CC">CC</option><option value="CE">CE</option><option value="NIT">NIT</option>
-                  <option value="PAS">PAS</option><option value="TI">TI</option><option value="Otro">Otro</option>
-                </select>
-                <input type="text" value={searchDocNumberInput} onChange={(e) => setSearchDocNumberInput(e.target.value)} placeholder="Número de documento" style={{ padding: '8px', flexGrow: 1, boxSizing: 'border-box' }} />
-                <button type="submit" disabled={loadingSpecificSearch} style={{ padding: '8px 15px' }}>Buscar</button>
+
+            <form onSubmit={handleSearchByDocumentSubmit} style={{ flex: 1, minWidth: '300px' }}>
+              <div style={formFieldStyle}>
+                <label style={formLabelStyle}>Buscar por Documento:</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <select value={searchDocTypeInput} onChange={handleSearchDocTypeChange} style={{...formSelectStyle, marginBottom:0, width: 'auto', flexBasis: '100px' }}>
+                    <option value="CC">CC</option><option value="CE">CE</option><option value="NIT">NIT</option>
+                    <option value="PAS">PAS</option><option value="TI">TI</option><option value="Otro">Otro</option>
+                  </select>
+                  <input type="text" value={searchDocNumberInput} onChange={handleSearchDocNumberChange} placeholder="Número" style={{...formInputStyle, marginBottom:0, flexGrow: 1}} />
+                  <button type="submit" disabled={loadingDocSearch} style={{ ...formButtonStyle, backgroundColor: '#007bff', padding: '10px' }}>
+                      {loadingDocSearch ? 'Buscando...' : 'Buscar'}
+                  </button>
+                </div>
               </div>
             </form>
           </div>
-          {loadingSpecificSearch && <p style={{marginTop: '10px'}}>Buscando cliente...</p>}
+          {(loadingNameSearch || loadingDocSearch) && <p style={{marginTop: '10px', textAlign:'center'}}>Buscando cliente...</p>}
+        </div>
+      )}
+      
+      {showFoundCustomersView && (
+        <div style={{...formSectionBoxStyle, borderColor: '#28a745' }}>
+          <h3>Clientes Encontrados ({foundCustomers.length})</h3>
+          {loadingNameSearch || loadingDocSearch ? <p style={{textAlign: 'center'}}>Actualizando...</p> : (
+            foundCustomers.length === 0 ? <p style={{textAlign: 'center', fontStyle: 'italic'}}>No se encontraron clientes con los criterios de búsqueda.</p> : (
+                foundCustomers.map(customer => (
+                <div key={customer.id} style={{ borderBottom: '1px solid #444', padding: '15px 0', marginBottom: '10px' }}>
+                    <p><strong>ID:</strong> {customer.id}</p>
+                    <p><strong>Nombre:</strong> {customer.full_name}</p>
+                    <p><strong>Documento:</strong> {customer.document_type} {customer.document_number}</p>
+                    <p><strong>Teléfono:</strong> {customer.phone}</p>
+                    <p><strong>Email:</strong> {customer.email || '-'}</p>
+                    <p><strong>Dirección:</strong> {customer.address || '-'}</p>
+                    <p><strong>Estado:</strong> 
+                        <span style={{ color: customer.is_active ? 'lightgreen' : '#ff7b7b', fontWeight: 'bold', marginLeft: '5px' }}>
+                            {customer.is_active ? 'Activo' : 'Inactivo'}
+                        </span>
+                    </p>
+                    <div style={{marginTop: '10px'}}>
+                    {isAdminOrSoporte && <button onClick={() => { handleEditClick(customer); }} style={{...formButtonStyle, backgroundColor: '#ffc107', color: '#212529', marginRight: '10px'}}>Editar</button> }
+                    {isAdminOrSoporte && <button onClick={() => { handleViewHistory(customer); }} style={{...formButtonStyle, backgroundColor: '#17a2b8'}}>Ver Historial</button>}
+                    </div>
+                </div>
+                ))
+            )
+          )}
+          <button onClick={() => clearSpecificSearches(true)} style={{ ...formButtonStyle, backgroundColor: '#6c757d', marginTop: '15px' }}>Limpiar Búsqueda y Ver Lista</button>
         </div>
       )}
 
-      {/* Visualización del Cliente Encontrado */}
-      {showFoundCustomerView && (
-        <div style={{ border: '1px solid #28a745', padding: '20px', marginBottom: '30px', borderRadius: '5px' }}>
-          <h3>Cliente Encontrado</h3>
-          <p><strong>ID:</strong> {foundCustomer.id}</p>
-          <p><strong>Nombre:</strong> {foundCustomer.full_name}</p>
-          <p><strong>Documento:</strong> {foundCustomer.document_type} {foundCustomer.document_number}</p>
-          <p><strong>Teléfono:</strong> {foundCustomer.phone}</p>
-          <p><strong>Email:</strong> {foundCustomer.email || '-'}</p>
-          <p><strong>Dirección:</strong> {foundCustomer.address || '-'}</p>
-          <p><strong>Estado:</strong> {foundCustomer.is_active ? 'Activo' : 'Inactivo'}</p>
-          <div style={{marginTop: '15px'}}>
-            {isAdminOrSoporte && <button onClick={() => { handleEditClick(foundCustomer); }} style={{marginRight: '10px'}}>Editar este Cliente</button> }
-            {isAdminOrSoporte && <button onClick={() => { handleViewHistory(foundCustomer); }} style={{marginRight: '10px'}}>Ver Historial</button>}
-            <button onClick={clearSpecificSearch}>Limpiar Búsqueda y Volver</button>
-          </div>
-        </div>
-      )}
-
-      {/* Formulario de Creación */}
       {showCreateView && (
-        <div style={{ border: '1px solid #555', padding: '20px', marginBottom: '30px', borderRadius: '5px' }}>
+         <div style={formSectionBoxStyle}> {/* Aplicando estilo de caja de sección */}
           <h3>Registrar Nuevo Cliente</h3>
           <form onSubmit={handleCreateCustomerSubmit}>
-            <div style={{ marginBottom: '10px' }}><label htmlFor="full_name_new">Nombre Completo: *</label><input type="text" id="full_name_new" name="full_name" value={newCustomer.full_name} onChange={handleNewCustomerChange} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/></div>
-            <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}><div style={{ flex: 1 }}><label htmlFor="document_type_new">Tipo Documento: *</label><select id="document_type_new" name="document_type" value={newCustomer.document_type} onChange={handleNewCustomerChange} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}><option value="CC">Cédula de Ciudadanía</option><option value="CE">Cédula de Extranjería</option><option value="NIT">NIT</option><option value="PAS">Pasaporte</option><option value="TI">Tarjeta de Identidad</option><option value="Otro">Otro</option></select></div><div style={{ flex: 2 }}><label htmlFor="document_number_new">Número Documento: *</label><input type="text" id="document_number_new" name="document_number" value={newCustomer.document_number} onChange={handleNewCustomerChange} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/></div></div>
-            <div style={{ marginBottom: '10px' }}><label htmlFor="phone_new">Teléfono: *</label><input type="tel" id="phone_new" name="phone" value={newCustomer.phone} onChange={handleNewCustomerChange} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/></div>
-            <div style={{ marginBottom: '10px' }}><label htmlFor="email_new">Email (Opcional):</label><input type="email" id="email_new" name="email" value={newCustomer.email} onChange={handleNewCustomerChange} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/></div>
-            <div style={{ marginBottom: '15px' }}><label htmlFor="address_new">Dirección (Opcional):</label><input type="text" id="address_new" name="address" value={newCustomer.address} onChange={handleNewCustomerChange} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/></div>
-            <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Guardar Cliente</button>
+            <div style={formFieldStyle}><label htmlFor="full_name_new" style={formLabelStyle}>Nombre Completo: *</label><input type="text" id="full_name_new" name="full_name" value={newCustomer.full_name} onChange={handleNewCustomerChange} required style={formInputStyle}/></div>
+            <div style={{ display: 'flex', gap: '20px', marginBottom: '0' }}> {/* Quitado marginBottom de aquí */}
+                <div style={{ flex: 1, ...formFieldStyle }}><label htmlFor="document_type_new" style={formLabelStyle}>Tipo Documento: *</label>
+                    <select id="document_type_new" name="document_type" value={newCustomer.document_type} onChange={handleNewCustomerChange} required style={formSelectStyle}>
+                        <option value="CC">Cédula de Ciudadanía</option><option value="CE">Cédula de Extranjería</option><option value="NIT">NIT</option>
+                        <option value="PAS">Pasaporte</option><option value="TI">Tarjeta de Identidad</option><option value="Otro">Otro</option>
+                    </select>
+                </div>
+                <div style={{ flex: 2, ...formFieldStyle }}><label htmlFor="document_number_new" style={formLabelStyle}>Número Documento: *</label>
+                    <input type="text" id="document_number_new" name="document_number" value={newCustomer.document_number} onChange={handleNewCustomerChange} required style={formInputStyle}/>
+                </div>
+            </div>
+            <div style={formFieldStyle}><label htmlFor="phone_new" style={formLabelStyle}>Teléfono: *</label><input type="tel" id="phone_new" name="phone" value={newCustomer.phone} onChange={handleNewCustomerChange} required maxLength="15" style={formInputStyle}/></div>
+            <div style={formFieldStyle}><label htmlFor="email_new" style={formLabelStyle}>Email (Opcional):</label><input type="email" id="email_new" name="email" value={newCustomer.email} onChange={handleNewCustomerChange} style={formInputStyle}/></div>
+            <div style={formFieldStyle}><label htmlFor="address_new" style={formLabelStyle}>Dirección (Opcional):</label><input type="text" id="address_new" name="address" value={newCustomer.address} onChange={handleNewCustomerChange} style={formInputStyle}/></div>
+            <button type="submit" disabled={loadingCreate} style={{ ...formButtonStyle, backgroundColor: '#28a745', marginTop: '10px' }}>{loadingCreate ? 'Guardando...' : 'Guardar Cliente'}</button>
           </form>
         </div>
       )}
 
-      {/* Formulario de Edición */}
       {showEditView && (
-        <div style={{ border: '1px solid #007bff', padding: '20px', marginBottom: '30px', borderRadius: '5px' }}>
+        <div style={{...formSectionBoxStyle, borderColor: '#007bff'}}> {/* Aplicando estilo de caja de sección */}
           <h3>Editando Cliente: {editingCustomer.full_name} (ID: {editingCustomer.id})</h3>
           <form onSubmit={handleUpdateCustomerSubmit}>
-            <div style={{ marginBottom: '10px' }}><label htmlFor="full_name_edit">Nombre Completo: *</label><input type="text" id="full_name_edit" name="full_name" value={editFormData.full_name} onChange={handleEditFormChange} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/></div>
-            <div style={{ display: 'flex', gap: '20px', marginBottom: '10px' }}><div style={{ flex: 1 }}><label htmlFor="document_type_edit">Tipo Documento: *</label><select id="document_type_edit" name="document_type" value={editFormData.document_type} onChange={handleEditFormChange} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}><option value="CC">Cédula de Ciudadanía</option><option value="CE">Cédula de Extranjería</option><option value="NIT">NIT</option><option value="PAS">Pasaporte</option><option value="TI">Tarjeta de Identidad</option><option value="Otro">Otro</option></select></div><div style={{ flex: 2 }}><label htmlFor="document_number_edit">Número Documento: *</label><input type="text" id="document_number_edit" name="document_number" value={editFormData.document_number} onChange={handleEditFormChange} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/></div></div>
-            <div style={{ marginBottom: '10px' }}><label htmlFor="phone_edit">Teléfono: *</label><input type="tel" id="phone_edit" name="phone" value={editFormData.phone} onChange={handleEditFormChange} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/></div>
-            <div style={{ marginBottom: '10px' }}><label htmlFor="email_edit">Email (Opcional):</label><input type="email" id="email_edit" name="email" value={editFormData.email} onChange={handleEditFormChange} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/></div>
-            <div style={{ marginBottom: '10px' }}><label htmlFor="address_edit">Dirección (Opcional):</label><input type="text" id="address_edit" name="address" value={editFormData.address} onChange={handleEditFormChange} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}/></div>
-            <div style={{ marginBottom: '15px' }}><label htmlFor="is_active_edit" style={{ marginRight: '10px' }}>Cliente Activo:</label><input type="checkbox" id="is_active_edit" name="is_active" checked={editFormData.is_active} onChange={handleEditFormChange} /></div>
-            <div style={{display: 'flex', gap: '10px'}}><button type="submit" disabled={loadingEdit} style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>{loadingEdit ? 'Actualizando...' : 'Actualizar Cliente'}</button><button type="button" onClick={handleCancelEdit} style={{ padding: '10px 20px', backgroundColor: '#6c757d', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Cancelar Edición</button></div>
+            <div style={formFieldStyle}><label htmlFor="full_name_edit" style={formLabelStyle}>Nombre Completo: *</label><input type="text" id="full_name_edit" name="full_name" value={editFormData.full_name} onChange={handleEditFormChange} required style={formInputStyle}/></div>
+            <div style={{ display: 'flex', gap: '20px', marginBottom: '0' }}>
+                <div style={{ flex: 1, ...formFieldStyle }}><label htmlFor="document_type_edit" style={formLabelStyle}>Tipo Documento: *</label>
+                    <select id="document_type_edit" name="document_type" value={editFormData.document_type} onChange={handleEditFormChange} required style={formSelectStyle}>
+                        <option value="CC">Cédula de Ciudadanía</option><option value="CE">Cédula de Extranjería</option><option value="NIT">NIT</option>
+                        <option value="PAS">Pasaporte</option><option value="TI">Tarjeta de Identidad</option><option value="Otro">Otro</option>
+                    </select>
+                </div>
+                <div style={{ flex: 2, ...formFieldStyle }}><label htmlFor="document_number_edit" style={formLabelStyle}>Número Documento: *</label>
+                    <input type="text" id="document_number_edit" name="document_number" value={editFormData.document_number} onChange={handleEditFormChange} required style={formInputStyle}/>
+                </div>
+            </div>
+            <div style={formFieldStyle}><label htmlFor="phone_edit" style={formLabelStyle}>Teléfono: *</label><input type="tel" id="phone_edit" name="phone" value={editFormData.phone} onChange={handleEditFormChange} required maxLength="15" style={formInputStyle}/></div>
+            <div style={formFieldStyle}><label htmlFor="email_edit" style={formLabelStyle}>Email (Opcional):</label><input type="email" id="email_edit" name="email" value={editFormData.email} onChange={handleEditFormChange} style={formInputStyle}/></div>
+            <div style={formFieldStyle}><label htmlFor="address_edit" style={formLabelStyle}>Dirección (Opcional):</label><input type="text" id="address_edit" name="address" value={editFormData.address} onChange={handleEditFormChange} style={formInputStyle}/></div>
+            
+            <div style={formCheckboxContainerStyle}> {/* Estilo para el checkbox */}
+              <label htmlFor="is_active_edit" style={formCheckboxLabelStyle}>Cliente Activo:</label>
+              <input type="checkbox" id="is_active_edit" name="is_active" checked={editFormData.is_active} onChange={handleEditFormChange} style={formCheckboxInputStyle} />
+            </div>
+
+            <div style={{display: 'flex', gap: '10px', marginTop: '10px'}}>
+                <button type="submit" disabled={loadingEdit} style={{ ...formButtonStyle, backgroundColor: '#007bff'}}>{loadingEdit ? 'Actualizando...' : 'Actualizar Cliente'}</button>
+                <button type="button" onClick={handleCancelEdit} style={{ ...formButtonStyle, backgroundColor: '#6c757d'}}>Cancelar Edición</button>
+            </div>
           </form>
         </div>
       )}
 
-      {/* Historial del Cliente */}
       {showHistoryView && (
-        <div style={{ border: '1px solid #ffc107', padding: '20px', marginTop: '20px', marginBottom: '30px', borderRadius: '5px' }}>
+        <div style={{...formSectionBoxStyle, borderColor: '#ffc107'}}> {/* Aplicando estilo de caja de sección */}
           <h3>Historial de: {selectedCustomerForHistory.full_name} (ID: {selectedCustomerForHistory.id})</h3>
           {loadingHistory && <p>Cargando historial...</p>}
           {historyError && <p style={{ color: 'red' }}>{historyError}</p>}
           {!loadingHistory && !historyError && customerHistory.length === 0 && <p>No hay historial disponible para este cliente.</p>}
           {!loadingHistory && !historyError && customerHistory.length > 0 && (
-            <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            <div style={{ maxHeight: '300px', overflowY: 'auto', border: '1px solid #444', padding: '10px', borderRadius: '4px' }}>
               {customerHistory.map(entry => (
-                <div key={entry.id} style={{ borderBottom: '1px solid #555', paddingBottom: '10px', marginBottom: '10px' }}>
+                <div key={entry.id} style={{ borderBottom: '1px solid #555', paddingBottom: '10px', marginBottom: '10px', fontSize: '0.9em' }}>
                   <p><strong>Fecha:</strong> {new Date(entry.date).toLocaleString()}</p>
                   <p><strong>Acción:</strong> {entry.action}</p>
                   <p><strong>Usuario (ID):</strong> {entry.user_id}</p>
                   <p><strong>Detalles:</strong></p>
-                  <pre style={{ backgroundColor: '#333', color: '#fff', padding: '10px', borderRadius: '4px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                    {typeof entry.details === 'string' ? JSON.stringify(JSON.parse(entry.details), null, 2) : JSON.stringify(entry.details, null, 2)}
+                  <pre style={{ backgroundColor: '#333', color: '#f0f0f0', padding: '10px', borderRadius: '4px', whiteSpace: 'pre-wrap', wordBreak: 'break-all', fontSize: '0.85em' }}>
+                    {typeof entry.details === 'string' && entry.details.startsWith('{') ? JSON.stringify(JSON.parse(entry.details), null, 2) : entry.details}
                   </pre>
                 </div>
               ))}
             </div>
           )}
-          <button onClick={() => setSelectedCustomerForHistory(null)} style={{ marginTop: '15px', padding: '8px 15px' }}>Cerrar Historial</button>
+          <button onClick={() => setSelectedCustomerForHistory(null)} style={{ ...formButtonStyle, backgroundColor: '#6c757d', marginTop: '15px' }}>Cerrar Historial</button>
         </div>
       )}
 
-      {/* Listado de Clientes */}
       {showMainListView && (
         <>
-          <hr style={{margin: '30px 0'}} />
+          <hr style={{margin: '30px 0', borderColor: '#444'}} />
           <h3>Listado de Clientes Registrados</h3>
-          {error && <p style={{ color: 'red' }}>{error}</p>}
-          {loading && <p>Cargando clientes...</p>}
-          {!loading && !error && customers.length === 0 && <p>No hay clientes registrados para mostrar.</p>}
+          {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+          {loading && <p style={{textAlign: 'center'}}>Cargando clientes...</p>}
+          {!loading && !error && customers.length === 0 && <p style={{textAlign: 'center', fontStyle: 'italic'}}>No hay clientes registrados para mostrar.</p>}
           {!loading && !error && customers.length > 0 && (
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px' }}>
+            <div style={{overflowX: 'auto'}}>
+            <table style={{ width: '100%', minWidth: '800px', borderCollapse: 'collapse', marginTop: '20px', color: 'white' }}>
               <thead>
                 <tr>
-                  <th style={tableHeaderStyle}>ID</th><th style={tableHeaderStyle}>Nombre Completo</th>
-                  <th style={tableHeaderStyle}>Documento</th><th style={tableHeaderStyle}>Teléfono</th>
-                  <th style={tableHeaderStyle}>Email</th><th style={tableHeaderStyle}>Estado</th>
+                  <th style={tableHeaderStyle}>ID</th>
+                  <th style={tableHeaderStyle}>Nombre Completo</th>
+                  <th style={tableHeaderStyle}>Documento</th>
+                  <th style={tableHeaderStyle}>Teléfono</th>
+                  <th style={tableHeaderStyle}>Email</th>
+                  <th style={tableHeaderStyle}>Estado</th>
                   <th style={tableHeaderStyle}>Acciones</th>
                 </tr>
               </thead>
@@ -383,30 +543,30 @@ function CustomersPage() {
                   <tr key={customer.id}>
                     <td style={tableCellStyle}>{customer.id}</td>
                     <td style={tableCellStyle}>{customer.full_name}</td>
-                    <td style={tableCellStyle}>{customer.document_type} {customer.document_number}</td>
+                    <td style={{...tableCellStyle, whiteSpace: 'nowrap'}}>{customer.document_type} {customer.document_number}</td>
                     <td style={tableCellStyle}>{customer.phone}</td>
                     <td style={tableCellStyle}>{customer.email || '-'}</td>
-                    <td style={tableCellStyle}>{customer.is_active ? 'Activo' : 'Inactivo'}</td>
-                    <td style={tableCellStyle}>
-                      <button onClick={() => handleEditClick(customer)} style={{marginRight: '5px', padding: '5px 10px', cursor: 'pointer'}}>Editar</button>
+                    <td style={{...tableCellStyle, color: customer.is_active ? 'lightgreen' : '#ff7b7b', fontWeight: 'bold' }}>
+                        {customer.is_active ? 'Activo' : 'Inactivo'}
+                    </td>
+                    <td style={{...tableCellStyle, whiteSpace: 'nowrap'}}>
+                      <button onClick={() => handleEditClick(customer)} style={{...formButtonStyle, backgroundColor: '#007bff', marginRight: '5px', padding: '6px 10px', fontSize:'0.9em'}}>Editar</button>
                       {customer.is_active && (
-                        <button onClick={() => handleInactivateClick(customer.id, customer.full_name)} style={{marginRight: '5px', padding: '5px 10px', cursor: 'pointer', backgroundColor: '#ffc107'}}>Inactivar</button>
+                        <button onClick={() => handleInactivateClick(customer.id, customer.full_name)} style={{...formButtonStyle, backgroundColor: '#ffc107', color: '#212529', marginRight: '5px', padding: '6px 10px', fontSize:'0.9em'}}>Inactivar</button>
                       )}
-                      {!customer.is_active && (<span style={{color: '#6c757d', marginRight: '5px'}}>(Inactivo)</span>)}
-                      <button onClick={() => handleViewHistory(customer)} style={{padding: '5px 10px', cursor: 'pointer', backgroundColor: '#17a2b8', color: 'white'}}>Historial</button>
+                      {!customer.is_active && (<span style={{color: '#888', marginRight: '5px', fontStyle: 'italic', fontSize:'0.9em'}}>(Inactivo)</span>)}
+                      <button onClick={() => handleViewHistory(customer)} style={{...formButtonStyle, backgroundColor: '#17a2b8', padding: '6px 10px', fontSize:'0.9em'}}>Historial</button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </>
       )}
     </div>
   );
 }
-
-const tableHeaderStyle = { borderBottom: '2px solid #888', padding: '10px', textAlign: 'left' };
-const tableCellStyle = { borderBottom: '1px solid #555', padding: '10px' };
 
 export default CustomersPage;

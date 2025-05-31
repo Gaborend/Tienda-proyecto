@@ -26,3 +26,6 @@ id,timestamp,user_id_performing_action,username_performing_action,action_type,ta
 30,2025-05-29T18:05:39.678658+00:00,1,soporte,USER_UPDATED,user,1.0,"{""full_name"": {""old"": ""soporte tecnico"", ""new"": ""Soporte t\u00e9cnico""}}"
 31,2025-05-29T18:05:57.728214+00:00,1,soporte,USER_UPDATED,user,1.0,"{""full_name"": {""old"": ""Soporte t\u00e9cnico"", ""new"": ""Soporte T\u00e9cnico""}}"
 32,2025-05-29T21:46:51.641427+00:00,1,soporte,STORE_SETTINGS_UPDATED,store_config,,"{""address"": {""old"": ""Calle 12345"", ""new"": ""Calle 123456""}}"
+33,2025-05-30T22:54:24.313106+00:00,1,soporte,USER_CREATED,user,8.0,"{""username"": ""Cajero6"", ""role"": ""caja"", ""full_name"": ""Cajero prueba"", ""email"": null, ""is_active"": true}"
+34,2025-05-30T22:55:10.909663+00:00,1,soporte,USER_CREATED,user,9.0,"{""username"": ""Cajero7"", ""role"": ""caja"", ""full_name"": ""Cajero prueba"", ""email"": null, ""is_active"": true}"
+35,2025-05-30T23:56:53.910548+00:00,1,soporte,USER_CREATED,user,8,"{""username"": ""cajero6"", ""role"": ""caja"", ""full_name"": ""Bryan Alejan"", ""email"": ""caje@tienda.com"", ""is_active"": true}"

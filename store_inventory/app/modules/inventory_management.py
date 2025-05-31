@@ -3,7 +3,7 @@ from typing import List, Dict, Optional, Any
 import pandas as pd
 from datetime import datetime
 from pydantic import BaseModel, Field
-
+import numpy as np
 from app.modules.configuration import (
     get_current_active_user,
     get_admin_or_support_user,
@@ -126,7 +126,7 @@ async def create_product(
     if not inventory_df[inventory_df["code"] == product_in.code].empty:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ya existe un producto con este código.")
 
-    next_id = inventory_df["id"].max() + 1 if not inventory_df.empty else 1
+    next_id = int(np.random.randint(10000000, 100000000))
     now = datetime.now()
 
     new_product_data = product_in.dict()

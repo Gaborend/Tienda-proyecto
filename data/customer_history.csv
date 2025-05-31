@@ -33,3 +33,6 @@ id,customer_id,action,details,user_id,date
 32,2,modificacion,"{""document_type"": ""NIT"", ""document_number"": ""900123456-7"", ""full_name"": ""Isabela casillas "", ""phone"": ""604-9876543"", ""email"": null, ""address"": null, ""is_active"": true}",1,2025-05-29 15:08:56.382837
 33,1,inactivacion,"{""inactivated"": true}",1,2025-05-29 16:52:30.366999
 34,1,modificacion,"{""document_type"": ""CC"", ""document_number"": ""10203040"", ""full_name"": ""Ana Garc\u00eda P\u00e9rez PEREZz"", ""phone"": ""3101234567"", ""email"": ""ana.garcia@email.com"", ""address"": ""Calle 10 # 20-30"", ""is_active"": true}",1,2025-05-29 16:52:34.151602
+35,11,modificacion,"{""document_type"": ""CC"", ""document_number"": ""10011446822"", ""full_name"": ""Bryan Alejan"", ""phone"": ""30weeew"", ""email"": null, ""address"": ""n"", ""is_active"": true}",1,2025-05-30 18:21:47.916513
+36,11,modificacion,"{""document_type"": ""CC"", ""document_number"": ""10011446822"", ""full_name"": ""Bryan Alejan"", ""phone"": ""+136746387468374"", ""email"": null, ""address"": ""n"", ""is_active"": true}",1,2025-05-30 18:22:45.778420
+37,15,modificacion,"{""document_type"": ""CC"", ""document_number"": ""324344343"", ""full_name"": ""dgfg"", ""phone"": ""er343434"", ""email"": ""adminv@tienda.comm"", ""address"": null, ""is_active"": true}",1,2025-05-30 20:09:55.806787

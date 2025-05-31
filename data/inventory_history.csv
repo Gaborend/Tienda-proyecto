@@ -62,3 +62,18 @@ id,product_id,product_code,quantity_changed,new_quantity,movement_type,notes,use
 61,2,SOM001,2,28,ajuste_stock_aumento,Razón: compra. Notas: ,1,2025-05-29 16:53:21.981153
 62,1,LIP001,-1,38,venta,Venta asociada a factura ID: INV-31,1,2025-05-29 16:56:44.500225
 63,1,LIP001,1,39,cancelacion_venta,Cancelación de venta ID: INV-31,1,2025-05-29 17:04:07.117995
+64,1,LIP001,-36,3,ajuste_stock_reduccion,Razón: Pruebas. Notas: ,1,2025-05-30 03:40:46.211370
+65,1,LIP001,30,33,ajuste_stock_aumento,Razón: Pruebas. Notas: ,1,2025-05-30 03:43:00.835643
+66,1,LIP001,-28,5,ajuste_stock_reduccion,Razón: Pruebas. Notas: ,1,2025-05-30 03:58:26.650658
+67,1,LIP001,1,6,ajuste_stock_aumento,Razón: Pruebas. Notas: ,1,2025-05-30 03:58:56.389598
+68,1,LIP001,40,46,ajuste_stock_aumento,Razón: compra. Notas: ,1,2025-05-30 03:59:14.224450
+69,2,SOM001,-24,4,ajuste_stock_reduccion,Razón: Pruebas. Notas: ,1,2025-05-30 04:00:12.360474
+70,1,LIP001,-46,0,ajuste_stock_reduccion,Razón: Pruebas. Notas: ,1,2025-05-30 17:38:19.743287
+71,1,LIP001,30,30,ajuste_stock_aumento,Razón: compra. Notas: ,1,2025-05-30 17:43:43.281542
+72,15,LIP003,3,25,ajuste_stock_aumento,Razón: Pruebas. Notas: ,1,2025-05-30 17:56:33.186877
+73,15,LIP003,3,28,ajuste_stock_aumento,Razón: Pruebas. Notas: ,1,2025-05-30 17:56:38.414387
+74,15,LIP003,3,31,ajuste_stock_aumento,Razón: Pruebas. Notas: ,1,2025-05-30 17:56:40.976795
+75,15,LIP003,4,35,ajuste_stock_aumento,Razón: compra. Notas: ,1,2025-05-30 17:56:55.469834
+76,16,LIP001ew,323,323,creacion_producto,Registro inicial de producto,1,2025-05-30 18:09:33.948802
+77,34903049,LIP0011,223,223,creacion_producto,Registro inicial de producto,1,2025-05-30 19:39:45.392350
+78,34903049,LIP0011,-1,222,venta,Venta asociada a factura ID: INV-32,1,2025-05-30 19:40:09.930034

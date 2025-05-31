@@ -89,3 +89,4 @@ id,product_id,product_code,quantity_changed,new_quantity,movement_type,notes,use
 88,34903049,LIP0011,1,222,cancelacion_venta,Cancelación de venta ID: INV-33,1,2025-05-31 14:53:18.666541
 89,1,LIP001,-1,37,venta,Venta asociada a factura ID: INV-37,1,2025-05-31 15:01:07.207463
 90,1,LIP001,-1,36,venta,Venta asociada a factura ID: INV-38,1,2025-05-31 15:03:54.906997
+91,1,LIP001,-1,35,venta,Venta asociada a factura ID: INV-39,1,2025-05-31 15:56:20.947955

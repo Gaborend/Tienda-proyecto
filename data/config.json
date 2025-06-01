@@ -3,7 +3,7 @@
     "contact_number": "3013081507",
     "address": "Calle 123456",
     "invoice_footer": "\u00a1Gracias por su compra!",
-    "store_logo_url": null,
+    "store_logo_url": "https://ibb.co/ZrZBfLX",
     "invoice_prefix": "INV-",
     "next_invoice_number": 55,
     "initial_cash_balance": 50000.0,

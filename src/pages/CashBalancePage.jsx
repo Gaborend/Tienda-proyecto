@@ -6,7 +6,7 @@ import configService from '../services/configService';
 import authService from '../services/authService';
 import billingService from '../services/billingService';
 
-// Estilos
+// Estilos (los mismos que la última versión funcional)
 const pageStyle = { padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '900px', margin: '0 auto' };
 const sectionStyle = { 
   marginBottom: '30px', padding: '20px', border: '1px solid #ccc', 
@@ -97,6 +97,13 @@ const printCashSummaryStyles = `
   }
 `;
 
+const roundToTwo = (num) => {
+  if (num === null || num === undefined || isNaN(parseFloat(num))) {
+    return 0; 
+  }
+  return +(Math.round(parseFloat(num) + "e+2")  + "e-2");
+};
+
 const parseLocalDateFromString = (dateString) => {
   if (!dateString || typeof dateString !== 'string') return null;
   const parts = dateString.split('-');
@@ -110,6 +117,16 @@ const parseLocalDateFromString = (dateString) => {
   return !isNaN(standardParsedDate.getTime()) ? standardParsedDate : null;
 };
 
+const getLocalDateYYYYMMDD = () => {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = (today.getMonth() + 1).toString().padStart(2, '0');
+  const day = today.getDate().toString().padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const EPSILON = 0.001; 
+
 function CashBalancePage() {
   const [todayRecord, setTodayRecord] = useState(null);
   const [storeConfig, setStoreConfig] = useState(null);
@@ -120,12 +137,12 @@ function CashBalancePage() {
   const [loadingOpen, setLoadingOpen] = useState(false);
   const [dailySalesSummary, setDailySalesSummary] = useState({ cash: 0, card: 0, transfer: 0, total: 0 });
   const [detailedTodaysSales, setDetailedTodaysSales] = useState([]);
-  const [showSalesDetails, setShowSalesDetails] = useState(false);
+  const [showSalesDetails, setShowSalesDetails] = useState(false); // Estado para mostrar/ocultar detalle de ventas
   const [loadingSales, setLoadingSales] = useState(false);
   const [expenses, setExpenses] = useState([]);
   const [currentExpense, setCurrentExpense] = useState({ 
     concept: '', value: '', recipient_id: '', 
-    expense_date: new Date().toISOString().split('T')[0],
+    expense_date: getLocalDateYYYYMMDD(),
     payment_method_expense: 'Efectivo'
   });
   const [countedCash, setCountedCash] = useState('');
@@ -138,35 +155,34 @@ function CashBalancePage() {
   });
 
   const currentUser = useMemo(() => authService.getCurrentUser(), []);
-  // Descomenta este log para verificar el usuario y rol al cargar la página:
-  // console.log("CashBalancePage - currentUser (al inicio del componente):", currentUser); 
-  
   const canOverrideInitialBalance = currentUser && ['admin', 'soporte'].includes(currentUser.role);
   const canReopenCashBalance = currentUser && ['admin', 'soporte'].includes(currentUser.role);
 
   const loadInitialPageData = useCallback(async () => {
-    // console.log("CashBalancePage: loadInitialPageData - Iniciando carga...");
     setLoading(true); setError('');
     try {
       const [recordResponse, configResponse] = await Promise.all([
         cashBalanceService.getTodaysCashRecord(),
         configService.getStoreSettings()
       ]);
-      // console.log("CashBalancePage: loadInitialPageData - recordResponse:", recordResponse);
-      // console.log("CashBalancePage: loadInitialPageData - configResponse:", configResponse);
-
       setTodayRecord(recordResponse); 
       setStoreConfig(configResponse);
       
       if (!recordResponse || recordResponse.status !== 'open') {
           setExpenses([]); setCountedCash(''); setNotes('');
+      } else if (recordResponse && recordResponse.status === 'open') {
+        setExpenses( (recordResponse.expenses_details || []).map(exp => ({
+          ...exp, 
+          id_temporal: `prev_${exp.concept || 'exp'}_${Date.now()}_${Math.random()}`.replace('.',''),
+          expense_date: exp.expense_date ? (parseLocalDateFromString(exp.expense_date)?.toISOString().split('T')[0] || getLocalDateYYYYMMDD()) : getLocalDateYYYYMMDD()
+        })) );
+        setNotes(recordResponse.notes || '');
       }
     } catch (err) {
       console.error("CashBalancePage: Error en loadInitialPageData:", err.response?.data || err.message || err);
       setError("Error al cargar datos iniciales. Verifique la conexión o intente recargar.");
       setTodayRecord(null); setStoreConfig(null);
     } finally {
-      // console.log("CashBalancePage: loadInitialPageData - Finalizado.");
       setLoading(false);
     }
   }, []); 
@@ -176,7 +192,8 @@ function CashBalancePage() {
   const fetchTodaysSales = useCallback(async () => {
     if (!todayRecord || !todayRecord.date || todayRecord.status !== 'open') {
       setDailySalesSummary({ cash: 0, card: 0, transfer: 0, total: 0 });
-      setDetailedTodaysSales([]); return;
+      setDetailedTodaysSales([]); 
+      return;
     }
     setLoadingSales(true);
     try {
@@ -188,11 +205,20 @@ function CashBalancePage() {
         setDetailedTodaysSales(salesData || []);
         let cash = 0, card = 0, transfer = 0;
         (salesData || []).forEach(sale => {
-            if (sale.payment_method?.toLowerCase() === 'efectivo') cash += sale.total_amount;
-            else if (sale.payment_method?.toLowerCase() === 'tarjeta') card += sale.total_amount;
-            else if (sale.payment_method?.toLowerCase() === 'transferencia') transfer += sale.total_amount;
+            const amount = parseFloat(sale.total_amount);
+            if (!isNaN(amount)) {
+                const paymentMethodLower = sale.payment_method?.toLowerCase();
+                if (paymentMethodLower === 'efectivo') cash += amount;
+                else if (paymentMethodLower?.includes('tarjeta')) card += amount; 
+                else if (paymentMethodLower === 'transferencia') transfer += amount;
+            }
         });
-        setDailySalesSummary({ cash, card, transfer, total: cash + card + transfer });
+        setDailySalesSummary({ 
+            cash: roundToTwo(cash), 
+            card: roundToTwo(card), 
+            transfer: roundToTwo(transfer), 
+            total: roundToTwo(cash + card + transfer) 
+        });
     } catch (err) {
         console.error("Error cargando ventas del día:", err);
         setError(prev => (prev ? prev + " " : "") + "Error al cargar resumen de ventas del día.");
@@ -207,19 +233,29 @@ function CashBalancePage() {
 
   useEffect(() => {
     if (todayRecord && todayRecord.status === 'open' && storeConfig) {
-      const totalIncome = dailySalesSummary.total;
-      const totalAllExpenses = expenses.reduce((sum, exp) => sum + parseFloat(exp.value || 0), 0);
-      const totalCashExpenses = expenses
-        .filter(exp => exp.payment_method_expense && exp.payment_method_expense.toLowerCase() === 'efectivo')
-        .reduce((sum, exp) => sum + parseFloat(exp.value || 0), 0);
-      const profit = totalIncome - totalAllExpenses;
-      const initialBalance = parseFloat(todayRecord.initial_balance); 
-      if (isNaN(initialBalance)) { console.error("Balance inicial inválido en todayRecord:", todayRecord); return; }
-      const cashSales = dailySalesSummary.cash;
-      const expectedCash = initialBalance + cashSales - totalCashExpenses;
-      const currentCountedCash = parseFloat(countedCash || 0);
-      const difference = currentCountedCash - expectedCash;
-      const cashToConsign = Math.max(0, cashSales - totalCashExpenses);
+      const totalIncome = roundToTwo(dailySalesSummary.total);
+      const totalAllExpenses = roundToTwo(
+        expenses.reduce((sum, exp) => sum + parseFloat(exp.value || 0), 0)
+      );
+      const totalCashExpenses = roundToTwo(
+        expenses
+          .filter(exp => exp.payment_method_expense && exp.payment_method_expense.toLowerCase() === 'efectivo')
+          .reduce((sum, exp) => sum + parseFloat(exp.value || 0), 0)
+      );
+      const profit = roundToTwo(totalIncome - totalAllExpenses);
+      const initialBalanceFloat = parseFloat(todayRecord.initial_balance);
+      const initialBalance = roundToTwo(isNaN(initialBalanceFloat) ? 0 : initialBalanceFloat); 
+      if (isNaN(initialBalanceFloat) && todayRecord.initial_balance !== undefined) { 
+          console.error("Balance inicial inválido en todayRecord:", todayRecord); 
+          setError("Error: El balance inicial registrado es inválido (" + todayRecord.initial_balance + ").");
+          setCalculatedTotals({ totalIncome: 0, totalExpenses: 0, totalCashExpenses: 0, profit: 0, expectedCash: 0, difference: 0, cashToConsign: 0, });
+          return; 
+      }
+      const cashSales = roundToTwo(dailySalesSummary.cash);
+      const expectedCash = roundToTwo(initialBalance + cashSales - totalCashExpenses);
+      const currentCountedCash = roundToTwo(parseFloat(countedCash || 0));
+      const difference = roundToTwo(currentCountedCash - expectedCash);
+      const cashToConsign = roundToTwo(Math.max(0, cashSales - totalCashExpenses)); 
       setCalculatedTotals({
         totalIncome, totalExpenses: totalAllExpenses, totalCashExpenses, 
         profit, expectedCash, difference, cashToConsign
@@ -246,8 +282,11 @@ function CashBalancePage() {
       }
       const newRecord = await cashBalanceService.openCashBalance(openData);
       setTodayRecord(newRecord); 
-      setSuccessMessage(`Caja abierta exitosamente con base de ${newRecord.initial_balance.toFixed(2)}.`);
+      setSuccessMessage(`Caja abierta exitosamente con base de ${roundToTwo(newRecord.initial_balance).toFixed(2)}.`);
       setInitialBalanceOverride(''); 
+      setExpenses([]); // Limpiar egresos al abrir nueva caja
+      setCountedCash(''); // Limpiar conteo
+      setNotes(''); // Limpiar notas
     } catch (err) { setError(err.response?.data?.detail || err.message || "Error al abrir la caja.");
     } finally { setLoadingOpen(false); }
   };
@@ -262,7 +301,7 @@ function CashBalancePage() {
     setExpenses([...expenses, { ...currentExpense, id_temporal: Date.now(), value: parseFloat(currentExpense.value) }]);
     setCurrentExpense({ 
         concept: '', value: '', recipient_id: '', 
-        expense_date: new Date().toISOString().split('T')[0],
+        expense_date: getLocalDateYYYYMMDD(),
         payment_method_expense: 'Efectivo'
     });
   };
@@ -279,60 +318,46 @@ function CashBalancePage() {
     try {
         const closeData = {
             expenses_details: expenses.map(exp => ({
-                concept: exp.concept, value: exp.value, 
+                concept: exp.concept, value: roundToTwo(exp.value), 
                 recipient_id: exp.recipient_id || null,
                 expense_date: exp.expense_date, 
                 payment_method_expense: exp.payment_method_expense
             })),
-            counted_cash_physical: parseFloat(countedCash),
+            counted_cash_physical: roundToTwo(parseFloat(countedCash)), 
             notes: notes.trim() || null,
         };
         const closedRecord = await cashBalanceService.closeCashBalance(closeData);
         setTodayRecord(closedRecord);
         setSuccessMessage("¡Caja cerrada exitosamente!");
-        setExpenses([]); setCountedCash(''); setNotes('');
+        setExpenses([]); setCountedCash(''); setNotes(''); 
     } catch (err) {
         console.error("Error al cerrar la caja:", err.response?.data || err.message || err);
         setError(err.response?.data?.detail || err.message || "Error al cerrar la caja.");
     } finally { setLoadingClose(false); }
   };
 
-    const handleReopenCashBalance = async () => {
-    const clientCurrentDateString = new Date().toLocaleDateString('en-CA'); // Obtiene "YYYY-MM-DD" en la zona local del cliente
-
-    // Asegurarse de que todayRecord y todayRecord.date existen
+  const handleReopenCashBalance = async () => {
+    const clientCurrentDateString = getLocalDateYYYYMMDD(); 
     if (!todayRecord || !todayRecord.date) {
-        alert("No hay un registro de cuadre cargado para reabrir.");
-        return;
+        alert("No hay un registro de cuadre cargado para reabrir."); return;
     }
-
-    // todayRecord.date ya viene del backend como "YYYY-MM-DD"
     const recordDateString = todayRecord.date; 
-
-    console.log("handleReopen - Fecha Cliente (YYYY-MM-DD):", clientCurrentDateString);
-    console.log("handleReopen - Fecha Registro (YYYY-MM-DD):", recordDateString);
-    console.log("handleReopen - Estado del Registro:", todayRecord.status);
-
-
     if (todayRecord.status !== 'closed' || recordDateString !== clientCurrentDateString) {
-      alert("Solo se puede reabrir un cuadre cerrado del día actual.");
-      return;
+      alert("Solo se puede reabrir un cuadre cerrado del día actual."); return;
     }
-
     if (!window.confirm("¿Está seguro de que desea reabrir este cuadre de caja para correcciones? Esta acción puede afectar reportes previos si no se maneja con cuidado.")) {
         return;
     }
-
     setLoadingReopen(true); setError(''); setSuccessMessage('');
     try {
         const reopenedRecord = await cashBalanceService.reopenLatestToday();
         setTodayRecord(reopenedRecord); 
         setSuccessMessage("Cuadre de caja reabierto para correcciones.");
-         if (reopenedRecord && reopenedRecord.status === 'open') {
+        if (reopenedRecord && reopenedRecord.status === 'open') {
             setExpenses( (reopenedRecord.expenses_details || []).map(exp => ({
                 ...exp, 
-                id_temporal: `prev_${exp.concept}_${Date.now()}_${Math.random()}`.replace('.',''),
-                expense_date: exp.expense_date ? (parseLocalDateFromString(exp.expense_date)?.toISOString().split('T')[0] || new Date().toISOString().split('T')[0]) : new Date().toISOString().split('T')[0]
+                id_temporal: `prev_${exp.concept || 'exp'}_${Date.now()}_${Math.random()}`.replace('.',''),
+                expense_date: exp.expense_date ? (parseLocalDateFromString(exp.expense_date)?.toISOString().split('T')[0] || getLocalDateYYYYMMDD()) : getLocalDateYYYYMMDD()
             })) );
             setCountedCash(''); 
             setNotes(reopenedRecord.notes || '');
@@ -340,22 +365,19 @@ function CashBalancePage() {
     } catch (err) {
         console.error("Error al reabrir cuadre de caja:", err.response?.data || err.message || err);
         setError(err.response?.data?.detail || err.message || "Error al intentar reabrir el cuadre.");
-    } finally {
-        setLoadingReopen(false);
-    }
-  };
-  const handlePrintCashSummary = () => {
-    window.print();
+    } finally { setLoadingReopen(false); }
   };
 
-  const renderOpenCashForm = () => {
+  const handlePrintCashSummary = () => { window.print(); };
+
+  const renderOpenCashForm = () => { 
     if (!storeConfig) return <p style={{textAlign:'center'}}>Cargando configuración de la tienda...</p>;
-    const todayClientDate = new Date().toLocaleDateString();
+    const todayClientDate = new Date().toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' });
     return (
       <section style={sectionStyle}>
         <h2 style={h2Style}>Abrir Caja para Hoy ({todayClientDate})</h2>
         <form onSubmit={handleOpenCashBalance}>
-          <p>Base de caja por defecto: <strong>{storeConfig.initial_cash_balance.toFixed(2)}</strong></p>
+          <p>Base de caja por defecto: <strong>{roundToTwo(storeConfig.initial_cash_balance).toFixed(2)}</strong></p>
           {canOverrideInitialBalance && (
             <div style={{marginBottom:'15px'}}>
               <label htmlFor="initialBalanceOverride" style={labelStyle}>
@@ -380,18 +402,38 @@ function CashBalancePage() {
   const renderCloseCashForm = () => {
     if (!todayRecord || !storeConfig || !todayRecord.date) return <p style={{textAlign:'center'}}>Cargando datos del cuadre...</p>;
     const displayRecordDateObj = parseLocalDateFromString(todayRecord.date);
-    const displayRecordDateStr = displayRecordDateObj ? displayRecordDateObj.toLocaleDateString() : "Fecha inválida";
-    const openingDateStr = parseLocalDateFromString(todayRecord.date)?.toLocaleDateString() || "Fecha inválida";
+    const displayRecordDateStr = displayRecordDateObj ? displayRecordDateObj.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }) : "Fecha inválida";
+    
+    let differenceText = '';
+    let differenceColor = '#333'; 
+
+    if (countedCash.trim() !== '' && !isNaN(calculatedTotals.difference)) {
+        if (Math.abs(calculatedTotals.difference) < EPSILON) {
+            differenceText = ' (Cuadre Exacto)';
+            differenceColor = 'green'; 
+        } else if (calculatedTotals.difference > 0) {
+            differenceText = ' (Sobrante)';
+            differenceColor = 'red'; 
+        } else { 
+            differenceText = ' (Faltante)';
+            differenceColor = 'red'; 
+        }
+    } else if (isNaN(calculatedTotals.difference) && countedCash.trim() !== '') {
+        differenceText = ' (Error en cálculo)';
+        differenceColor = 'red';
+    }
 
     return (
       <section style={sectionStyle}>
         <h2 style={h2Style}>Cerrar Caja - {displayRecordDateStr}</h2>
         <div style={infoBoxStyle}>
             <p>Caja abierta por: <strong>{todayRecord.opened_by_username}</strong></p>
-            <p>Base Inicial Reportada: <strong>{parseFloat(todayRecord.initial_balance).toFixed(2)}</strong></p>
-            <p>Fecha Apertura: <strong>{openingDateStr}</strong></p>
+            <p>Base Inicial Reportada: <strong>{roundToTwo(parseFloat(todayRecord.initial_balance)).toFixed(2)}</strong></p>
+            <p>Fecha Apertura: <strong>{displayRecordDateStr}</strong></p>
             <p>Estado: <strong style={{color: 'green'}}>ABIERTA</strong></p>
         </div>
+
+        {/* --- SECCIÓN RESTAURADA: Resumen de Ventas del Día --- */}
         <div style={{marginBottom: '25px'}}>
             <h3 style={h3Style}>Resumen de Ventas del Día</h3>
             {loadingSales && <p>Cargando ventas...</p>}
@@ -411,29 +453,31 @@ function CashBalancePage() {
                 </button>
             )}
             {showSalesDetails && detailedTodaysSales.length > 0 && (
-                <div style={{marginTop: '15px', maxHeight:'300px', overflowY:'auto', border:'1px solid #eee', padding:'10px', backgroundColor:'#fff'}}>
-                    <h4 style={{marginTop:0, marginBottom:'10px', fontSize:'1.1em', color:'#333'}}>Detalle de Transacciones del Día:</h4>
-                    {detailedTodaysSales.map(sale => (
-                        <div key={sale.id} style={{marginBottom:'15px', paddingBottom:'10px', borderBottom:'1px dashed #ccc'}}>
-                            <p style={{margin:'2px 0', fontSize:'0.95em'}}><strong>Factura:</strong> {sale.invoice_number} - <strong>Cliente:</strong> {sale.customer_name} ({sale.customer_document || 'N/A'})</p>
-                            <p style={{margin:'2px 0', fontSize:'0.95em'}}><strong>Total Factura:</strong> {sale.total_amount.toFixed(2)} - <strong>Método:</strong> {sale.payment_method}</p>
-                            <table style={itemsSubTableStyle}>
-                                <thead><tr>
-                                    <th style={itemsSubThStyle}>Item</th><th style={{...itemsSubThStyle, textAlign:'right'}}>Cant.</th>
-                                    <th style={{...itemsSubThStyle, textAlign:'right'}}>P.Unit</th><th style={{...itemsSubThStyle, textAlign:'right'}}>P.Total</th>
-                                </tr></thead>
-                                <tbody>
-                                    {(sale.items || []).map((item, index) => (
-                                        <tr key={index}><td style={itemsSubTdStyle}>{item.description}</td>
-                                            <td style={{...itemsSubTdStyle, textAlign:'right'}}>{item.quantity}</td>
-                                            <td style={{...itemsSubTdStyle, textAlign:'right'}}>{item.unit_price.toFixed(2)}</td>
-                                            <td style={{...itemsSubTdStyle, textAlign:'right'}}>{item.total_item_price.toFixed(2)}</td></tr>
-                                    ))}</tbody>
-                            </table></div>
-                    ))}</div>
+              <div style={{marginTop: '15px', maxHeight:'300px', overflowY:'auto', border:'1px solid #eee', padding:'10px', backgroundColor:'#fff'}}>
+                  <h4 style={{marginTop:0, marginBottom:'10px', fontSize:'1.1em', color:'#333'}}>Detalle de Transacciones del Día:</h4>
+                  {detailedTodaysSales.map(sale => (
+                      <div key={sale.id} style={{marginBottom:'15px', paddingBottom:'10px', borderBottom:'1px dashed #ccc'}}>
+                          <p style={{margin:'2px 0', fontSize:'0.95em'}}><strong>Factura:</strong> {sale.invoice_number} - <strong>Cliente:</strong> {sale.customer_name} ({sale.customer_document || 'N/A'})</p>
+                          <p style={{margin:'2px 0', fontSize:'0.95em'}}><strong>Total Factura:</strong> {roundToTwo(sale.total_amount).toFixed(2)} - <strong>Método:</strong> {sale.payment_method}</p>
+                          <table style={itemsSubTableStyle}>
+                              <thead><tr>
+                                  <th style={itemsSubThStyle}>Item</th><th style={{...itemsSubThStyle, textAlign:'right'}}>Cant.</th>
+                                  <th style={{...itemsSubThStyle, textAlign:'right'}}>P.Unit</th><th style={{...itemsSubThStyle, textAlign:'right'}}>P.Total</th>
+                              </tr></thead>
+                              <tbody>
+                                  {(sale.items || []).map((item, index) => (
+                                      <tr key={index}><td style={itemsSubTdStyle}>{item.description}</td>
+                                          <td style={{...itemsSubTdStyle, textAlign:'right'}}>{item.quantity}</td>
+                                          <td style={{...itemsSubTdStyle, textAlign:'right'}}>{roundToTwo(item.unit_price).toFixed(2)}</td>
+                                          <td style={{...itemsSubTdStyle, textAlign:'right'}}>{roundToTwo(item.total_item_price).toFixed(2)}</td></tr>
+                                  ))}</tbody>
+                          </table></div>
+                  ))}</div>
             )}
             {!loadingSales && detailedTodaysSales.length === 0 && <p style={{fontStyle:'italic', fontSize:'0.9em', marginTop:'10px'}}>No hay ventas registradas para este cuadre.</p>}
         </div>
+
+        {/* --- SECCIÓN RESTAURADA: Registro de Egresos Diarios --- */}
         <div style={{marginBottom: '25px'}}>
             <h3 style={h3Style}>Registro de Egresos Diarios</h3>
             <div style={formRowStyle}>
@@ -449,7 +493,7 @@ function CashBalancePage() {
                     <label htmlFor="expRecipient" style={labelStyle}>ID Receptor (Opcional):</label>
                     <input type="text" id="expRecipient" style={inputStyle} value={currentExpense.recipient_id} onChange={e => setCurrentExpense({...currentExpense, recipient_id: e.target.value})} />
                 </div>
-                 <div style={formFieldStyle(1, '130px')}>
+                <div style={formFieldStyle(1, '130px')}>
                     <label htmlFor="expDate" style={labelStyle}>Fecha Egreso:</label>
                     <input type="date" id="expDate" style={inputStyle} value={currentExpense.expense_date} onChange={e => setCurrentExpense({...currentExpense, expense_date: e.target.value})} />
                 </div>
@@ -472,11 +516,11 @@ function CashBalancePage() {
                     {expenses.map(exp => (
                         <li key={exp.id_temporal} style={expenseItemStyle}>
                             <div style={expenseItemDetailsStyle}>
-                                {(parseLocalDateFromString(exp.expense_date)?.toLocaleDateString() || exp.expense_date)}: {exp.concept} 
-                                ({exp.recipient_id || 'N/A'}) - <strong>{parseFloat(exp.value).toFixed(2)}</strong>
+                                {(parseLocalDateFromString(exp.expense_date)?.toLocaleDateString('es-CO') || exp.expense_date)}: {exp.concept} 
+                                ({exp.recipient_id || 'N/A'}) - <strong>{roundToTwo(parseFloat(exp.value)).toFixed(2)}</strong>
                                 <em style={{fontSize:'0.85em', marginLeft:'10px', color:'#555'}}>(Pagado con: {exp.payment_method_expense})</em>
                             </div>
-                            <button onClick={() => handleRemoveExpense(exp.id_temporal)} style={{...buttonStyle, backgroundColor:'#d9534f', fontSize:'0.8em', padding:'4px 8px', flexShr:0, minWidth:'auto', marginRight:0}}>Quitar</button>
+                            <button onClick={() => handleRemoveExpense(exp.id_temporal)} style={{...buttonStyle, backgroundColor:'#d9534f', color:'white', fontSize:'0.8em', padding:'4px 8px', flexShr:0, minWidth:'auto', marginRight:0}}>Quitar</button>
                         </li>
                     ))}
                 </ul>
@@ -486,6 +530,7 @@ function CashBalancePage() {
                 <strong>{calculatedTotals.totalExpenses.toFixed(2)}</strong>
             </div>
         </div>
+
         <div style={{marginBottom: '25px'}}>
             <h3 style={h3Style}>Cierre de Caja</h3>
             <div style={{marginBottom:'15px'}}>
@@ -498,54 +543,59 @@ function CashBalancePage() {
             </div>
         </div>
         <div style={{marginBottom: '30px', padding:'20px', border:'1px dashed #007bff', borderRadius:'8px', backgroundColor:'#fff'}}>
-            <h3 style={{...h2Style, fontSize:'1.3em', color:'#007bff', borderBottom:'none', paddingBottom:0}}>Cálculos del Cuadre</h3>
-            <div style={calculationRowStyle}><span>(+) Base Inicial de Caja:</span> <span>{parseFloat(todayRecord.initial_balance).toFixed(2)}</span></div>
-            <div style={calculationRowStyle}><span>(+) Ventas en Efectivo del Día:</span> <span>{dailySalesSummary.cash.toFixed(2)}</span></div>
+            <h3 style={{...h2Style, fontSize:'1.3em', color:'#007bff', borderBottom:'none', paddingBottom:0, marginTop:0}}>Cálculos del Cuadre</h3>
+            <div style={calculationRowStyle}><span>(+) Base Inicial de Caja:</span> <span>{roundToTwo(parseFloat(todayRecord.initial_balance)).toFixed(2)}</span></div>
+            <div style={calculationRowStyle}><span>(+) Ventas en Efectivo del Día:</span> <span>{calculatedTotals.totalIncome > 0 ? dailySalesSummary.cash.toFixed(2) : '0.00'}</span></div>
             <div style={calculationRowStyle}><span>(-) Egresos en Efectivo del Día:</span> <span>- {calculatedTotals.totalCashExpenses.toFixed(2)}</span></div>
             <div style={calculationTotalRowStyle}><span>(=) Efectivo Esperado en Caja:</span><span>{calculatedTotals.expectedCash.toFixed(2)}</span></div>
-            <div style={calculationRowStyle}><span>(&nbsp;&nbsp;&nbsp;) Efectivo Físico Contado:</span> <span>{parseFloat(countedCash || 0).toFixed(2)}</span></div>
-            <div style={{...calculationTotalRowStyle, color: calculatedTotals.difference === 0 ? 'green' : (isNaN(calculatedTotals.difference) ? '#333' : 'red')}}>
+            <div style={calculationRowStyle}><span>(&nbsp;&nbsp;&nbsp;) Efectivo Físico Contado:</span> <span>{roundToTwo(parseFloat(countedCash || 0)).toFixed(2)}</span></div>
+            
+            <div style={{...calculationTotalRowStyle, color: differenceColor }}>
                 <span>(=) Diferencia:</span> 
                 <span>
                     {isNaN(calculatedTotals.difference) ? '0.00' : calculatedTotals.difference.toFixed(2)}
-                    {!isNaN(calculatedTotals.difference) && (calculatedTotals.difference > 0 ? ' (Sobrante)' : calculatedTotals.difference < 0 ? ' (Faltante)' : (countedCash !== '' ? ' (Cuadre Exacto)' : ''))}
+                    {differenceText}
                 </span>
             </div>
             <hr style={{margin: '20px 0'}}/>
             <div style={calculationRowStyle}><span>Utilidad Bruta del Día (Ingresos Totales - Egresos Totales):</span> <strong>{calculatedTotals.profit.toFixed(2)}</strong></div>
             <div style={calculationTotalRowStyle}><span>Dinero a Consignar (Ventas Efectivo - Egresos Efectivo):</span> <strong>{calculatedTotals.cashToConsign.toFixed(2)}</strong></div>
         </div>
-        <button onClick={handleCloseCashBalance} disabled={loadingClose || loadingSales} style={{...buttonStyle, backgroundColor:'#28a745', width:'100%', padding:'15px', fontSize:'1.1em', marginRight:0}}>
+        <button onClick={handleCloseCashBalance} disabled={loadingClose || loadingSales} style={{...buttonStyle, backgroundColor:'#28a745', color:'white', width:'100%', padding:'15px', fontSize:'1.1em', marginRight:0}}>
             {loadingClose ? 'Cerrando Caja...' : (loadingSales ? 'Calculando ventas...' : 'Confirmar y Cerrar Caja')}
         </button>
       </section>
     );
   };
-
+  
   const renderClosedCashSummary = () => { 
     if (!todayRecord || !todayRecord.date) return null;
     const closedRecordDateObj = parseLocalDateFromString(todayRecord.date);
-    const closedRecordDateStr = closedRecordDateObj ? closedRecordDateObj.toLocaleDateString() : "Fecha inválida";
+    const closedRecordDateStr = closedRecordDateObj ? closedRecordDateObj.toLocaleDateString('es-CO', { year: 'numeric', month: 'long', day: 'numeric' }) : "Fecha inválida";
     let isToday = false;
-    const clientToday = new Date(); // Fecha y hora actual del cliente
-    clientToday.setHours(0, 0, 0, 0); // Normalizar al inicio del día (medianoche local)
+    const clientToday = new Date(); 
+    clientToday.setHours(0, 0, 0, 0); 
 
-    if (closedRecordDateObj) { // Asegurarse que closedRecordDateObj no sea null
-        // closedRecordDateObj ya está normalizado a medianoche local por parseLocalDateFromString
+    if (closedRecordDateObj) { 
         isToday = clientToday.getTime() === closedRecordDateObj.getTime();
     }
-
-     
-   
-    console.log("--- Debug renderClosedCashSummary ---");
-    console.log("Fecha Actual (Cliente String):", new Date().toISOString().split('T')[0]);
-    console.log("Fecha del Registro (todayRecord.date String):", todayRecord.date);
-    console.log("¿Es Hoy (isToday)?", isToday);
-    console.log("Usuario Actual (currentUser):", currentUser);
-    console.log("¿Puede Reabrir (canReopenCashBalance)?", canReopenCashBalance);
-    console.log("Estado del Registro (todayRecord.status):", todayRecord.status);
-    console.log("------------------------------------");
     
+    let differenceTextSummary = '';
+    let differenceColorSummary = '#333';
+    const recordDifference = parseFloat(todayRecord.difference); // Asumiendo que 'difference' se guarda como número
+
+    if (!isNaN(recordDifference)) {
+        if (Math.abs(recordDifference) < EPSILON) {
+            differenceTextSummary = ' (Cuadre Exacto)';
+            differenceColorSummary = 'green';
+        } else if (recordDifference > 0) {
+            differenceTextSummary = ' (Sobrante)';
+            differenceColorSummary = 'red';
+        } else { // recordDifference < 0
+            differenceTextSummary = ' (Faltante)';
+            differenceColorSummary = 'red';
+        }
+    }
 
     return (
       <div className="cash-summary-printable"> 
@@ -553,43 +603,44 @@ function CashBalancePage() {
           <h2 style={{...h2Style, textAlign:'center'}}>Cuadre de Caja del {closedRecordDateStr} - CERRADO</h2>
           <div style={{...infoBoxStyle, border:'1px solid #ddd', backgroundColor:'#f9f9f9'}} className="info-box-print">
               <p>Caja abierta por: <strong>{todayRecord.opened_by_username}</strong></p>
-              <p>Base Inicial: <strong>{parseFloat(todayRecord.initial_balance).toFixed(2)}</strong></p>
-              <p>Cerrada por: <strong>{todayRecord.closed_by_username || 'N/A'}</strong> el {todayRecord.closing_time ? new Date(todayRecord.closing_time).toLocaleString() : 'N/A'}</p>
+              <p>Base Inicial: <strong>{roundToTwo(todayRecord.initial_balance).toFixed(2)}</strong></p>
+              <p>Cerrada por: <strong>{todayRecord.closed_by_username || 'N/A'}</strong> el {todayRecord.closing_time ? new Date(todayRecord.closing_time).toLocaleString('es-CO') : 'N/A'}</p>
               <p>Estado: <strong style={{color: 'red'}}>CERRADA</strong></p>
           </div>
           <h3 style={h3Style}>Resumen del Cierre:</h3>
-          <div style={calculationRowStyle} className="calculation-row-print"><span>Total Ingresos Calculados:</span> <strong>{todayRecord.total_income_calculated?.toFixed(2) ?? 'N/A'}</strong></div>
-          <div style={calculationRowStyle} className="calculation-row-print"><span>Ventas en Efectivo:</span> <strong>{todayRecord.cash_sales?.toFixed(2) ?? 'N/A'}</strong></div>
-          <div style={calculationRowStyle} className="calculation-row-print"><span>Ventas con Tarjeta:</span> <strong>{todayRecord.card_sales?.toFixed(2) ?? 'N/A'}</strong></div>
-          <div style={calculationRowStyle} className="calculation-row-print"><span>Ventas por Transferencia:</span> <strong>{todayRecord.transfer_sales?.toFixed(2) ?? 'N/A'}</strong></div>
+          <div style={calculationRowStyle} className="calculation-row-print"><span>Total Ingresos Calculados:</span> <strong>{roundToTwo(todayRecord.total_income_calculated).toFixed(2) ?? 'N/A'}</strong></div>
+          <div style={calculationRowStyle} className="calculation-row-print"><span>Ventas en Efectivo:</span> <strong>{roundToTwo(todayRecord.cash_sales).toFixed(2) ?? 'N/A'}</strong></div>
+          <div style={calculationRowStyle} className="calculation-row-print"><span>Ventas con Tarjeta:</span> <strong>{roundToTwo(todayRecord.card_sales).toFixed(2) ?? 'N/A'}</strong></div>
+          <div style={calculationRowStyle} className="calculation-row-print"><span>Ventas por Transferencia:</span> <strong>{roundToTwo(todayRecord.transfer_sales).toFixed(2) ?? 'N/A'}</strong></div>
           <hr style={{margin:'15px 0'}}/>
           <h4 style={{color:'#333', fontSize:'1.1em', marginTop:'15px', marginBottom:'5px'}}>Egresos Registrados:</h4>
           {todayRecord.expenses_details && todayRecord.expenses_details.length > 0 ? (
               <ul style={{listStyle:'none', paddingLeft: '0px', fontSize:'0.9em'}}>
                   {todayRecord.expenses_details.map((exp, idx) => (
                       <li key={idx} style={{padding:'4px 0', borderBottom:'1px dotted #eee'}}>
-                          {(exp.expense_date ? (parseLocalDateFromString(exp.expense_date)?.toLocaleDateString() || exp.expense_date) : 'N/A')}: {exp.concept} 
-                          ({exp.recipient_id || 'N/A'}) - <strong>{parseFloat(exp.value).toFixed(2)}</strong>
+                          {(exp.expense_date ? (parseLocalDateFromString(exp.expense_date)?.toLocaleDateString('es-CO') || exp.expense_date) : 'N/A')}: {exp.concept} 
+                          ({exp.recipient_id || 'N/A'}) - <strong>{roundToTwo(exp.value).toFixed(2)}</strong>
                           {exp.payment_method_expense && <em style={{fontSize:'0.9em', marginLeft:'10px', color:'#555'}}>(Pagado con: {exp.payment_method_expense})</em>}
                       </li>
                   ))}
               </ul>
           ) : <p><em>No se registraron egresos.</em></p>}
-          <div style={calculationTotalRowStyle} className="calculation-row-print"><span>Total Egresos Registrados:</span> <strong>{todayRecord.total_expenses_recorded?.toFixed(2) ?? 'N/A'}</strong></div>
+          <div style={calculationTotalRowStyle} className="calculation-row-print"><span>Total Egresos Registrados:</span> <strong>{roundToTwo(todayRecord.total_expenses_recorded).toFixed(2) ?? 'N/A'}</strong></div>
           <hr style={{margin:'15px 0'}}/>
-          <div style={calculationRowStyle} className="calculation-row-print"><span>Utilidad del Día (Ingresos - Egresos):</span> <strong>{todayRecord.profit_of_the_day?.toFixed(2) ?? 'N/A'}</strong></div>
+          <div style={calculationRowStyle} className="calculation-row-print"><span>Utilidad del Día (Ingresos - Egresos):</span> <strong>{roundToTwo(todayRecord.profit_of_the_day).toFixed(2) ?? 'N/A'}</strong></div>
           <hr style={{margin:'15px 0'}}/>
-          <div style={calculationRowStyle} className="calculation-row-print"><span>Efectivo Esperado en Caja:</span> <strong>{todayRecord.expected_cash_in_box?.toFixed(2) ?? 'N/A'}</strong></div>
-          <div style={calculationRowStyle} className="calculation-row-print"><span>Efectivo Físico Contado:</span> <strong>{todayRecord.counted_cash_physical?.toFixed(2) ?? 'N/A'}</strong></div>
-          <div style={{...calculationTotalRowStyle, color: todayRecord.difference === 0 ? 'green' : (todayRecord.difference == null ? '#333' : 'red')}} className="calculation-row-print">
+          <div style={calculationRowStyle} className="calculation-row-print"><span>Efectivo Esperado en Caja:</span> <strong>{roundToTwo(todayRecord.expected_cash_in_box).toFixed(2) ?? 'N/A'}</strong></div>
+          <div style={calculationRowStyle} className="calculation-row-print"><span>Efectivo Físico Contado:</span> <strong>{roundToTwo(todayRecord.counted_cash_physical).toFixed(2) ?? 'N/A'}</strong></div>
+          
+          <div style={{...calculationTotalRowStyle, color: differenceColorSummary }} className="calculation-row-print">
               <span>Diferencia:</span> 
               <strong>
-                  {todayRecord.difference?.toFixed(2) ?? 'N/A'} 
-                  {todayRecord.difference != null && (todayRecord.difference > 0 ? ' (Sobrante)' : todayRecord.difference < 0 ? ' (Faltante)' : ' (Cuadre Exacto)')}
+                  {roundToTwo(todayRecord.difference).toFixed(2) ?? 'N/A'} 
+                  {differenceTextSummary}
               </strong>
           </div>
           <hr style={{margin:'15px 0'}}/>
-          <div style={calculationTotalRowStyle} className="calculation-row-print"><span>Dinero a Consignar (Efectivo):</span> <strong>{todayRecord.cash_to_consign?.toFixed(2) ?? 'N/A'}</strong></div>
+          <div style={calculationTotalRowStyle} className="calculation-row-print"><span>Dinero a Consignar (Efectivo):</span> <strong>{roundToTwo(todayRecord.cash_to_consign).toFixed(2) ?? 'N/A'}</strong></div>
           {todayRecord.notes && <p style={{marginTop:'15px'}}><strong>Notas del Cierre:</strong> <em>{todayRecord.notes}</em></p>}
 
           <div style={{marginTop: '25px', textAlign:'center'}} className="no-print">
@@ -614,7 +665,9 @@ function CashBalancePage() {
     );
   };
   
-  if (loading) { return <div style={pageStyle}><p style={{textAlign:'center', fontSize:'1.2em', padding:'30px'}}>Cargando información del cuadre de caja...</p></div>; }
+  if (loading && !storeConfig && !todayRecord) { 
+    return <div style={pageStyle}><p style={{textAlign:'center', fontSize:'1.2em', padding:'30px'}}>Cargando información del cuadre de caja...</p></div>;
+  }
 
   return (
     <div style={pageStyle}>
@@ -624,15 +677,15 @@ function CashBalancePage() {
           ← Volver al Dashboard
         </button>
       </Link>
-      <h1 style={{color: '#fffff', textAlign: 'center', marginBottom: '30px'}} className="no-print">Gestión de Cuadre de Caja</h1>
+      <h1 style={{color: '#ffffff', textAlign: 'center', marginBottom: '30px'}} className="no-print">Gestión de Cuadre de Caja</h1>
 
       {error && <p style={errorStyle} className="no-print">{error}</p>}
       {successMessage && <p style={successStyle} className="no-print">{successMessage}</p>}
 
       <div className="content-to-show">
-        {!error && storeConfig && !todayRecord && renderOpenCashForm()}
-        {!error && storeConfig && todayRecord && todayRecord.status === 'open' && renderCloseCashForm()}
-        {!error && storeConfig && todayRecord && todayRecord.status === 'closed' && renderClosedCashSummary()}
+        {storeConfig && !todayRecord && !error && renderOpenCashForm()}
+        {storeConfig && todayRecord && todayRecord.status === 'open' && !error && renderCloseCashForm()}
+        {storeConfig && todayRecord && todayRecord.status === 'closed' && !error && renderClosedCashSummary()}
         
         {!loading && !storeConfig && !error && (
           <p style={errorStyle}>No se pudo cargar la configuración de la tienda. Por favor, <button onClick={loadInitialPageData} style={{...buttonStyle, fontSize:'0.9em', padding:'5px 10px', backgroundColor:'#0069d9'}}>reintente</button> o contacte a soporte.</p>

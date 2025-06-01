@@ -635,7 +635,7 @@ function BillingPage() {
                             <optgroup label="Productos">
                                 {allProducts.map(product => (
                                     <option key={`product-${product.id}`} value={`product-${product.id}`}>
-                                        {product.description} (Cód: {product.internal_code || product.barcode || 'N/A'}) - Stock: {product.quantity} - Vlr: {product.sale_value.toFixed(2)}
+                                        {product.description} - Stock: {product.quantity} - Vlr: {product.sale_value.toFixed(2)}
                                     </option>
                                 ))}
                             </optgroup>
@@ -644,7 +644,7 @@ function BillingPage() {
                             <optgroup label="Servicios">
                                 {allServices.map(service => (
                                     <option key={`service-${service.id}`} value={`service-${service.id}`}>
-                                        {service.description} (Cód: {service.internal_code || 'N/A'}) - Vlr: {service.value.toFixed(2)}
+                                        {service.description} - Vlr: {service.value.toFixed(2)}
                                     </option>
                                 ))}
                             </optgroup>

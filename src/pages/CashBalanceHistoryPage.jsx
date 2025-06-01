@@ -263,7 +263,7 @@ function CashBalanceHistoryPage() {
           <label htmlFor="end_date_filter_history" style={labelStyle}>Hasta:</label>
           <input id="end_date_filter_history" type="date" name="end_date" value={filters.end_date} onChange={handleFilterChange} style={inputStyle} />
         </div>
-        <button type="submit" style={{ ...buttonStyle, backgroundColor: '#007bff', color: 'white', alignSelf: 'flex-end', padding: '10px 20px', height:'min-content' }}>Aplicar Filtros</button>
+        
       </form>
 
       {loading && <p style={{textAlign:'center', padding: '20px'}}>Cargando historial...</p>}

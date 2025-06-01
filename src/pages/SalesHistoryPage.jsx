@@ -5,7 +5,7 @@ import billingService from '../services/billingService';
 import InvoiceModal from '../components/InvoiceModal';
 import configService from '../services/configService';
 
-// Estilos (sin cambios)
+// Estilos (se mantienen los que ya tienes)
 const pageStyle = { padding: '20px', fontFamily: 'Arial, sans-serif' };
 const tableHeaderStyle = { 
   borderBottom: '2px solid #333', padding: '12px 10px', textAlign: 'left', 
@@ -47,22 +47,20 @@ function SalesHistoryPage() {
   const [currentFilters, setCurrentFilters] = useState({
     invoice_number: '',
     customer_document_query: '',
-    status: '', // '' para "Todos"
+    status: '', 
     start_date: '',
     end_date: '',
-    payment_method: '', // '' para "Todos"
+    payment_method: '', 
     product_id_in_sale: '',
   });
 
   const [submittedFilters, setSubmittedFilters] = useState(currentFilters);
 
-  // --- CORRECCIÓN: Declarar pagination ANTES de su uso ---
   const [pagination, setPagination] = useState({
     skip: 0,
     limit: REGULAR_LIMIT,
   });
 
-  // isExpandedSearch es una variable derivada del estado de pagination.limit para la UI
   const isExpandedSearchForUI = pagination.limit === EXPANDED_SEARCH_LIMIT;
 
   const fetchSales = useCallback(async () => {
@@ -72,8 +70,8 @@ function SalesHistoryPage() {
     console.log("FETCHSALES: Paginación actual:", JSON.parse(JSON.stringify(pagination)));
 
     const paramsForBackend = {
-      skip: pagination.skip, // Usar directamente del estado de paginación
-      limit: pagination.limit, // Usar directamente del estado de paginación
+      skip: pagination.skip,
+      limit: pagination.limit,
     };
     
     if (submittedFilters.invoice_number.trim()) {
@@ -97,15 +95,18 @@ function SalesHistoryPage() {
         }
     }
 
+    // --- MODIFICACIÓN: Lógica de envío de status y payment_method ---
+    // Enviar 'status' al backend si está seleccionado (no es "Todos")
     if (submittedFilters.status) { 
         paramsForBackend.status = submittedFilters.status;
-        if (submittedFilters.payment_method) {
-            paramsForBackend.payment_method = submittedFilters.payment_method;
-        }
-    } else { 
-        // Status es '' (Todos). No se envía status.
-        // No se envía payment_method (se filtrará en frontend si es necesario).
     }
+    // Enviar 'payment_method' al backend SIEMPRE si está seleccionado (no es "Todos")
+    // El backend deberá manejar la combinación de estos filtros.
+    // Si 'status' no se envía, el backend debería devolver todos los estados para el 'payment_method' dado.
+    if (submittedFilters.payment_method) {
+        paramsForBackend.payment_method = submittedFilters.payment_method;
+    }
+    // --- FIN DE LA MODIFICACIÓN ---
 
     console.log("FETCHSALES: Parámetros enviados al Backend:", JSON.parse(JSON.stringify(paramsForBackend)));
 
@@ -116,6 +117,7 @@ function SalesHistoryPage() {
       
       let ventasFiltradas = ventasRecibidasDelBackend;
 
+      // Filtrar por Documento del Cliente (se mantiene en frontend)
       const docQuery = submittedFilters.customer_document_query.trim().toLowerCase();
       if (docQuery) {
         ventasFiltradas = ventasFiltradas.filter(sale =>
@@ -126,12 +128,8 @@ function SalesHistoryPage() {
         console.log(`FETCHSALES: Ventas tras filtro DOC (${docQuery}) quedaron (${ventasFiltradas.length})`);
       }
       
-      if (submittedFilters.status === '' && submittedFilters.payment_method) {
-        ventasFiltradas = ventasFiltradas.filter(sale => 
-          sale.payment_method === submittedFilters.payment_method
-        );
-        console.log(`FETCHSALES: Ventas tras filtro PM en frontend (${submittedFilters.payment_method}) si Status=Todos, quedaron (${ventasFiltradas.length})`);
-      }
+      // --- ELIMINADO: Filtrado adicional de payment_method en frontend ---
+      // Ya que ahora se envía payment_method al backend en todos los casos donde está seleccionado.
 
       setSales(ventasFiltradas);
 
@@ -159,7 +157,7 @@ function SalesHistoryPage() {
     } finally {
       setLoading(false);
     }
-  }, [submittedFilters, pagination.skip, pagination.limit]);
+  }, [submittedFilters, pagination.skip, pagination.limit]); 
 
   useEffect(() => {
     const fetchStoreConfig = async () => { 
@@ -194,7 +192,6 @@ function SalesHistoryPage() {
       !currentFilters.end_date &&
       !currentFilters.product_id_in_sale.trim();
     
-    // Actualizar paginación aquí; el cambio en pagination (o submittedFilters) activará fetchSales
     setPagination({ 
       skip: 0, 
       limit: shouldUseExpandedLimit ? EXPANDED_SEARCH_LIMIT : REGULAR_LIMIT
@@ -245,7 +242,7 @@ function SalesHistoryPage() {
 
   const handleNextPage = () => {
     if (loading || pagination.limit === EXPANDED_SEARCH_LIMIT) return; 
-    if (sales.length < pagination.limit && !loading) { // Evitar avanzar si ya no hay más datos en la página actual
+    if (sales.length < pagination.limit && !loading) {
         return; 
     }
     setPagination(prev => ({ ...prev, skip: prev.skip + prev.limit }));
@@ -297,7 +294,6 @@ function SalesHistoryPage() {
             <option value="Efectivo">Efectivo</option>
             <option value="Tarjeta">Tarjeta</option>
             <option value="Transferencia">Transferencia</option>
-            {/* Añadir más opciones si es necesario */}
           </select>
         </div>
         <div style={filterItemStyle}>
@@ -366,7 +362,6 @@ function SalesHistoryPage() {
         </div>
       )}
       
-      {/* Usar isExpandedSearchForUI para la lógica de la UI de paginación */}
       {!loading && !isExpandedSearchForUI && (sales.length > 0 || pagination.skip > 0) ? (
           <div style={paginationContainerStyle}>
             <button 
@@ -379,7 +374,7 @@ function SalesHistoryPage() {
             <span>Página {Math.floor(pagination.skip / REGULAR_LIMIT) + 1}</span>
             <button 
               onClick={handleNextPage} 
-              disabled={loading || (sales.length < pagination.limit)}
+              disabled={loading || (sales.length < pagination.limit && !loading)}
               style={{...buttonStyle, backgroundColor: '#6c757d', color: 'white'}}
             >
               Siguiente

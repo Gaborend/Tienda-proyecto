@@ -332,7 +332,7 @@ function CashBalancePage() {
         setExpenses([]); setCountedCash(''); setNotes(''); 
     } catch (err) {
         console.error("Error al cerrar la caja:", err.response?.data || err.message || err);
-        setError(err.response?.data?.detail || err.message || "Error al cerrar la caja.");
+        setError(err.response?.data?.detail || err.message || "Solo el usuario que abrió la caja o un admin/soporte pueden cerrarla.");
     } finally { setLoadingClose(false); }
   };
 
@@ -490,7 +490,7 @@ function CashBalancePage() {
                     <input type="number" id="expValue" style={inputStyle} value={currentExpense.value} onChange={e => setCurrentExpense({...currentExpense, value: e.target.value})} step="any" min="0" />
                 </div>
                 <div style={formFieldStyle(1, '130px')}>
-                    <label htmlFor="expRecipient" style={labelStyle}>ID Receptor (Opcional):</label>
+                    <label htmlFor="expRecipient" style={labelStyle}>ID Receptor:</label>
                     <input type="text" id="expRecipient" style={inputStyle} value={currentExpense.recipient_id} onChange={e => setCurrentExpense({...currentExpense, recipient_id: e.target.value})} />
                 </div>
                 <div style={formFieldStyle(1, '130px')}>

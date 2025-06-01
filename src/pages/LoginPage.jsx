@@ -2,21 +2,22 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
-import { useTheme } from '../contexts/ThemeContext'; // Importa el hook useTheme
+import { useTheme } from '../contexts/ThemeContext';
+
+// CORRECCIÓN AQUÍ: Usando el nombre de tu imagen "logo.jpeg"
+import companyLogo from '../assets/logo.jpeg'; // <--- AJUSTADO AL NOMBRE DE TU IMAGEN
 
 function LoginPage() {
-  const { currentThemeColors } = useTheme(); // Accede a los colores del tema
+  const { currentThemeColors } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false); // Estado para la carga del botón
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     const token = authService.getToken();
     if (token) {
-      // Podrías añadir un pequeño delay o un estado de carga aquí si la redirección no es inmediata
-      // y quieres mostrar algo al usuario.
       navigate('/dashboard', { replace: true });
     }
   }, [navigate]);
@@ -24,16 +25,14 @@ function LoginPage() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
-    setIsLoading(true); // Iniciar carga
+    setIsLoading(true);
     try {
       const data = await authService.login(username, password);
-      // No es necesario el console.log en producción
-      // console.log("Login exitoso desde LoginPage, redirigiendo...", data);
       navigate('/dashboard');
     } catch (err) {
       setError(err.response?.data?.detail || 'Error al iniciar sesión. Verifica tus credenciales o la conexión.');
     } finally {
-      setIsLoading(false); // Finalizar carga
+      setIsLoading(false);
     }
   };
 
@@ -50,67 +49,72 @@ function LoginPage() {
     fontFamily: 'Arial, sans-serif',
     backgroundColor: currentThemeColors.pageBackground, 
     color: currentThemeColors.primaryText, 
-    transition: 'background-color 0.3s ease, color 0.3s ease', // Transición suave
+    transition: 'background-color 0.3s ease, color 0.3s ease',
   };
 
   const loginBoxStyle = {
     backgroundColor: currentThemeColors.contentBackground, 
-    padding: '45px 55px', // Padding actual: 45px vertical, 55px horizontal
+    padding: '45px 55px',
     borderRadius: '16px', 
     boxShadow: `0 12px 35px rgba(0,0,0,0.25)`, 
     width: '100%',
-    maxWidth: '480px', // Ancho máximo actual
+    maxWidth: '480px',
     textAlign: 'center',
     transition: 'background-color 0.3s ease',
   };
 
+  const logoStyle = {
+    width: '150px', 
+    height: 'auto', 
+    marginBottom: '30px', 
+    borderRadius: '8px' 
+  };
+
   const loginTitleStyle = {
     color: currentThemeColors.headingColor, 
-    marginBottom: '45px', // Más espacio
-    fontSize: '2.6em', // Más grande
+    marginBottom: '45px',
+    fontSize: '2.6em',
     fontWeight: 'bold',
   };
 
   const inputGroupStyle = {
-    marginBottom: '30px', // Más espacio
+    marginBottom: '30px',
     textAlign: 'left',
   };
 
   const labelStyle = {
     display: 'block',
     color: currentThemeColors.secondaryText, 
-    marginBottom: '12px', // Más espacio
-    fontSize: '1.05em', // Más grande
+    marginBottom: '12px',
+    fontSize: '1.05em',
     fontWeight: 'bold',
   };
 
   const inputStyle = {
     width: '100%',
-    padding: '18px 22px', // Inputs más grandes y cómodos
+    padding: '18px 22px',
     backgroundColor: currentThemeColors.inputBackground, 
-    border: `2px solid ${currentThemeColors.inputBorder}`, // Borde más grueso
-    borderRadius: '10px', // Más redondeado
+    border: `2px solid ${currentThemeColors.inputBorder}`,
+    borderRadius: '10px',
     color: currentThemeColors.inputText, 
-    fontSize: '1.05em', // Texto del input más grande
+    fontSize: '1.05em',
     boxSizing: 'border-box',
     transition: 'border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
-    outline: 'none', // Quitar outline por defecto
+    outline: 'none',
   };
-  // Para el efecto de foco, se puede añadir en el propio input con onFocus y onBlur
-  // o con CSS si usas clases. Aquí un ejemplo simple en el JSX.
 
   const buttonStyle = {
     width: '100%',
-    padding: '18px 22px', // Botón más grande
+    padding: '18px 22px',
     backgroundColor: currentThemeColors.buttonPrimaryBg, 
     color: currentThemeColors.buttonPrimaryText, 
     border: 'none',
     borderRadius: '10px',
-    fontSize: '1.2em', // Más grande
+    fontSize: '1.2em',
     fontWeight: 'bold',
     cursor: 'pointer',
     transition: 'background-color 0.2s ease-in-out, transform 0.1s ease, box-shadow 0.2s ease',
-    marginTop: '25px', // Más espacio
+    marginTop: '25px',
     boxShadow: `0 4px 12px rgba(0,0,0,0.1)`,
     outline: 'none',
   };
@@ -120,7 +124,7 @@ function LoginPage() {
     backgroundColor: currentThemeColors.dangerBg,
     padding: '12px 15px',
     borderRadius: '8px',
-    marginTop: '30px', // Más espacio
+    marginTop: '30px',
     textAlign: 'center',
     fontSize: '1em',
     minHeight: '1.5em',
@@ -130,6 +134,9 @@ function LoginPage() {
   return (
     <div style={loginPageStyle}>
       <div style={loginBoxStyle}>
+        {/* Aquí se usa la imagen importada */}
+        <img src={companyLogo} alt="Logo de la Empresa" style={logoStyle} /> 
+        
         <h2 style={loginTitleStyle}>Iniciar Sesión</h2>
         <form onSubmit={handleSubmit}>
           <div style={inputGroupStyle}>
@@ -164,7 +171,7 @@ function LoginPage() {
             type="submit" 
             style={{
               ...buttonStyle,
-              opacity: isLoading ? 0.7 : 1, // Atenuar si está cargando
+              opacity: isLoading ? 0.7 : 1,
               cursor: isLoading ? 'not-allowed' : 'pointer',
             }}
             disabled={isLoading}

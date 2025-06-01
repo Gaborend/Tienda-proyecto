@@ -292,7 +292,7 @@ function SalesHistoryPage() {
           <select id="payment_method_filter" name="payment_method" value={currentFilters.payment_method} onChange={handleFilterChange} style={inputStyle}>
             <option value="">Todos</option>
             <option value="Efectivo">Efectivo</option>
-            <option value="Tarjeta">Tarjeta</option>
+            <option value="Tarjeta C/D">Tarjeta C/D</option>
             <option value="Transferencia">Transferencia</option>
           </select>
         </div>

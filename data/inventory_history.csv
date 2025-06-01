@@ -100,3 +100,5 @@ id,product_id,product_code,quantity_changed,new_quantity,movement_type,notes,use
 99,14,32323,1,232,cancelacion_venta,Cancelación de venta ID: INV-44,8,2025-05-31 18:19:05.643386
 100,3,BAS001,1,34,cancelacion_venta,Cancelación de venta ID: INV-44,8,2025-05-31 18:19:05.679599
 101,15,LIP003,1,35,cancelacion_venta,Cancelación de venta ID: INV-44,8,2025-05-31 18:19:05.729266
+102,1,LIP001,1,35,cancelacion_venta,Cancelación de venta ID: INV-11,8,2025-05-31 19:45:32.364181
+103,97466568,LIP001333,3232,3232,creacion_producto,Registro inicial de producto,1,2025-05-31 21:27:46.757631

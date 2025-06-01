@@ -315,8 +315,15 @@ function ServicesPage() {
             <form onSubmit={handleSearchServiceByIdSubmit} style={{ flex: 1, minWidth: '250px' }}>
               <label htmlFor="searchIdInputSrv" style={{ display: 'block', marginBottom: '5px' }}>Buscar por ID:</label>
               <div style={{ display: 'flex' }}>
-                <input type="number" id="searchIdInputSrv" value={searchIdInputSrv} 
-                       onChange={(e) => {setSearchIdInputSrv(e.target.value); if(specificServiceSearchError) setSpecificServiceSearchError('');}} 
+                <input type="number" id="searchIdInputSrv" value={searchIdInputSrv}
+                       min="0" // <-- AÑADIDO: Para indicar que el valor mínimo es 0
+                       onChange={(e) => {
+                       const inputValue = e.target.value;
+         // Procesa el valor para permitir solo dígitos (números no negativos)
+                       const processedValue = inputValue.replace(/[^0-9]/g, ''); 
+                       setSearchIdInputSrv(processedValue);
+                       if(specificServiceSearchError) setSpecificServiceSearchError('');
+                       }} 
                        placeholder="ID del servicio" style={{...inputStyle, flexGrow:1}} />
                 <button type="submit" disabled={loadingSpecificServiceSearch} style={{...actionButtonStyle, padding: '8px 15px', marginLeft: '10px', height: '38px' }}>Buscar</button>
               </div>

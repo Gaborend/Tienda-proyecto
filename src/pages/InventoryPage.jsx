@@ -407,8 +407,15 @@ function InventoryPage() {
               <div style={formFieldStyle}>
                 <label htmlFor="searchIdInputProd" style={formLabelStyle}>Buscar por Código de Barras (ID):</label>
                 <div style={{ display: 'flex' }}>
-                  <input type="number" id="searchIdInputProd" value={searchIdInputProd} 
-                         onChange={(e) => {setSearchIdInputProd(e.target.value); if(specificProductSearchError) setSpecificProductSearchError('');}} 
+                  <input type="number" id="searchIdInputProd" value={searchIdInputProd}
+                         min="0" // <-- AÑADIDO: Para indicar que el valor mínimo es 0
+                         onChange={(e) => {
+                         const inputValue = e.target.value;
+         // Procesa el valor para permitir solo dígitos (números no negativos)
+                         const processedValue = inputValue.replace(/[^0-9]/g, ''); 
+                         setSearchIdInputProd(processedValue);
+                         if(specificProductSearchError) setSpecificProductSearchError('');
+                         }} 
                          placeholder="ID numérico (Código de Barras)" style={{...formInputStyle, marginBottom: 0, flexGrow:1}} />
                   <button type="submit" disabled={loadingSpecificProductSearch} style={{ ...formButtonStyle, backgroundColor: '#007bff', padding: '10px', marginLeft: '10px' }}>Buscar</button>
                 </div>

@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 import authService from '../services/authService';
 
 // Asegúrate que la ruta al logo sea correcta desde src/components/
-import companyLogo from '../assets/logo.jpeg'; // Ajusta si tu logo está en otra parte o tiene otro nombre
+// Este es el logo que SIEMPRE se usará en la factura.
+import companyLogo from '../assets/logo.jpeg'; 
 
-// --- Estilos (Como los tenías) ---
+// --- Estilos ---
 const modalOverlayStyle = {
   position: 'fixed',
   top: 0, left: 0, right: 0, bottom: 0,
@@ -21,7 +22,7 @@ const modalContentStyle = {
 };
 const invoiceLogoScreenStyle = {
   display: 'block', margin: '0 auto 15px auto', 
-  maxWidth: '130px', maxHeight: '70px', height: 'auto',    
+  maxWidth: '130px', maxHeight: '70px', height: 'auto',     
 };
 const headerStyle = {
   textAlign: 'center', marginBottom: '25px',
@@ -56,7 +57,7 @@ const cancelledStatusStyle = {
     border: '2px dashed red', padding: '10px', marginTop: '15px', marginBottom: '15px',
 };
 
-// Estilos de Impresión (como en la versión anterior, con el logo y ajustes)
+// Estilos de Impresión
 const printStyles = `
   @media print {
     @page { margin: 10mm; size: auto; }
@@ -81,9 +82,11 @@ const printStyles = `
       box-sizing: border-box !important; page-break-before: auto; page-break-after: auto;
       font-family: Arial, Helvetica, sans-serif; 
     }
-    .invoice-modal-printable .invoice-logo-print-class {
-      display: block !important; margin: 0 auto 8mm auto !important; 
-      max-width: 35mm !important; max-height: 20mm !important; 
+    .invoice-modal-printable .invoice-logo-print-class { /* Estilo para el logo en impresión */
+      display: block !important;
+      margin: 0 auto 8mm auto !important; 
+      max-width: 35mm !important;  
+      max-height: 20mm !important; 
       page-break-after: avoid !important;
     }
     .invoice-modal-printable .invoice-header-print {
@@ -151,9 +154,7 @@ const printStyles = `
 `;
 
 function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false }) {
-  // Guardia principal: si no hay saleData, no renderizar nada o un mensaje.
   if (!saleData) {
-    // Podrías retornar un modal de error simple o null si el padre lo maneja
     return (
         <div style={modalOverlayStyle}>
             <div style={modalContentStyle}>
@@ -170,7 +171,8 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
   const [loadingCancellerName, setLoadingCancellerName] = useState(false);
 
   useEffect(() => {
-    if (saleData.status === 'cancelled' && saleData.cancelled_by_user_id) {
+    // Asegurarse que saleData exista antes de acceder a sus propiedades
+    if (saleData && saleData.status === 'cancelled' && saleData.cancelled_by_user_id) {
       const fetchCancellerName = async () => {
         setLoadingCancellerName(true);
         setCancellerFullName(''); 
@@ -192,10 +194,9 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
     } else {
       setCancellerFullName(''); 
     }
-  }, [saleData.status, saleData.cancelled_by_user_id]); // saleData siempre existirá aquí por la guardia inicial
+  }, [saleData?.status, saleData?.cancelled_by_user_id]); // Dependencias con optional chaining por si saleData cambia a null
 
   const handlePrint = () => {
-    // ... (lógica de handlePrint sin cambios) ...
     const printableElement = document.querySelector('.invoice-modal-printable');
     if (!printableElement) {
       alert('Error: No se encontró el contenido para imprimir.');
@@ -206,14 +207,17 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
     iframe.style.height = '0'; iframe.style.border = '0';
     iframe.style.visibility = 'hidden'; iframe.setAttribute('aria-hidden', 'true');
     document.body.appendChild(iframe);
+    
     const doc = iframe.contentWindow.document;
     doc.open();
     doc.write('<!DOCTYPE html><html><head><title>Factura</title>');
     doc.write(`<style type="text/css">${printStyles}</style>`);
     doc.write('</head><body class="invoice-modal-printable-container"></body></html>');
     doc.close();
+    
     const clonedPrintableElement = printableElement.cloneNode(true);
     doc.body.appendChild(clonedPrintableElement);
+    
     iframe.contentWindow.focus(); 
     setTimeout(() => {
       try {
@@ -231,14 +235,14 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
     }, 750); 
   };
 
-  // Funciones para formatear números de forma segura
-  const formatNumber = (num, decimals = 2) => (typeof num === 'number' ? num.toFixed(decimals) : (0).toFixed(decimals));
+  const formatNumber = (num, decimals = 2) => (typeof num === 'number' ? num.toFixed(decimals) : Number(0).toFixed(decimals));
   const formatPercentage = (num) => (typeof num === 'number' ? num.toFixed(1) : 'N/A');
   
-  // Cálculo seguro del IVA para visualización
-  const calculatedIvaAmount = (typeof saleData.total_amount === 'number' && typeof saleData.subtotal === 'number' && typeof saleData.discount_value === 'number')
-    ? saleData.total_amount - (saleData.subtotal - saleData.discount_value)
-    : 0;
+  const calculatedIvaAmount = (
+        typeof saleData.total_amount === 'number' && 
+        typeof saleData.subtotal === 'number' && 
+        typeof saleData.discount_value === 'number'
+    ) ? saleData.total_amount - (saleData.subtotal - saleData.discount_value) : 0;
 
   return (
     <>
@@ -247,10 +251,16 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
       <div style={modalOverlayStyle}>
         <div style={modalContentStyle} className="invoice-modal-printable">
           
-          {storeConfig?.store_logo_url ? (
-             <img src={storeConfig.store_logo_url} alt="Logo Tienda" style={invoiceLogoScreenStyle} className="invoice-logo-print-class" />
-          ) : ( 
-             companyLogo && <img src={companyLogo} alt="Logo Empresa" style={invoiceLogoScreenStyle} className="invoice-logo-print-class" />
+          {/* SECCIÓN DEL LOGO CORREGIDA */}
+          {/* Siempre se usa el logo local importado para la factura. */}
+          {/* El alt puede usar el nombre de la tienda de la configuración si está disponible. */}
+          {companyLogo && (
+            <img 
+              src={companyLogo} 
+              alt={storeConfig?.store_name || "Logo Empresa"} 
+              style={invoiceLogoScreenStyle} 
+              className="invoice-logo-print-class" 
+            />
           )}
           
           <div style={headerStyle} className="invoice-header-print">
@@ -291,8 +301,8 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
               </tr>
             </thead>
             <tbody>
-              {(saleData.items || []).map((item, index) => ( // Fallback a array vacío
-                <tr key={item?.id ? `${item.id}-${index}` : `item-${index}`}> {/* Key más robusta */}
+              {(saleData.items || []).map((item, index) => (
+                <tr key={item?.id ? `${item.id}-${index}` : `item-${index}-${item?.description?.slice(0,5) || 'temp'}`}>
                   <td style={tdStyle}>{item?.description || 'N/A'}</td>
                   <td style={{...tdStyle, textAlign:'center'}}>{item?.quantity ?? 0}</td>
                   <td style={{...tdStyle, textAlign:'right'}}>${formatNumber(item?.unit_price)}</td>
@@ -309,7 +319,8 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
             <div style={detailRowStyle} className="detail-row-print">
                 <span>Descuento:</span> <strong>- ${formatNumber(saleData.discount_value)}</strong>
             </div>
-            {saleData.iva_applied && (
+            {/* Mostrar IVA solo si fue aplicado Y si el monto es mayor a cero (o ligeramente mayor para evitar problemas de redondeo) */}
+            {saleData.iva_applied && calculatedIvaAmount > 0.001 && (
               <div style={detailRowStyle} className="detail-row-print">
                 <span>IVA ({formatPercentage(saleData.iva_percentage_used ?? storeConfig?.iva_percentage)}%):</span>
                 <strong>+ ${formatNumber(calculatedIvaAmount)}</strong>
@@ -326,7 +337,9 @@ function InvoiceModal({ saleData, onClose, storeConfig, isViewingMode = false })
           {saleData.status === 'cancelled' && saleData.cancellation_date && (
             <div className="cancellation-details-print" style={{ marginTop: '20px', padding: '10px', border: '1px solid #ccc', backgroundColor: '#f9f9f9' }}>
               <h3 style={{ color: 'red', fontSize: '1.1em' }}>Detalles de Cancelación:</h3>
-              <p><strong>Fecha de Cancelación:</strong> {new Date(saleData.cancellation_date).toLocaleString('es-CO')}</p>
+              <p><strong>Fecha de Cancelación:</strong> 
+                {saleData.cancellation_date ? new Date(saleData.cancellation_date).toLocaleString('es-CO') : 'N/A'}
+              </p>
               <p><strong>Motivo:</strong> {saleData.cancellation_reason || 'No especificado'}</p>
               <p>
                 <strong>Cancelada por: </strong> 

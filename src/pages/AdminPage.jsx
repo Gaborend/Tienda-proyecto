@@ -288,7 +288,7 @@ function AdminPage() {
       <div style={{ marginBottom: '25px', textAlign: 'left' }}>
           <Link to="/dashboard">
               <button style={{ ...formButtonStyle, backgroundColor: '#6c757d' }}>
-                  ← Volver al Dashboard
+                  ← Volver al Inicio 
               </button>
           </Link>
       </div>

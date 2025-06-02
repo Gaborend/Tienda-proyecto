@@ -367,7 +367,7 @@ function InventoryPage() {
   return (
     <div style={pageOverallStyle}>
       <div style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to="/dashboard"><button style={{ ...formButtonStyle, backgroundColor: '#6c757d', padding: '8px 15px', fontSize: '14px' }}>← Volver</button></Link>
+        <Link to="/dashboard"><button style={{ ...formButtonStyle, backgroundColor: '#6c757d', padding: '8px 15px', fontSize: '14px' }}>← Volver al Inicio</button></Link>
         {canManage && activeView === 'list' && (
           <button onClick={() => { clearAllMessagesAndData(); setActiveView('create'); setNewProduct({ code: '', description: '', brand: '', category: '', quantity: '', cost_value: '', sale_value: '' }); }}
             style={{ ...formButtonStyle, backgroundColor: '#007bff' }}

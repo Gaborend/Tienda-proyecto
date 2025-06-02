@@ -282,7 +282,7 @@ function ServicesPage() {
   return (
     <div style={{ padding: '20px', fontFamily: 'Arial, sans-serif', color: 'white' }}> {/* Tema oscuro */}
       <div style={{ marginBottom: '25px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Link to="/dashboard"><button style={{ padding: '8px 15px', fontSize: '14px', cursor:'pointer' }}>← Volver al Dashboard</button></Link>
+        <Link to="/dashboard"><button style={{ padding: '8px 15px', fontSize: '14px', cursor:'pointer',backgroundColor: '#6c757d' }}>← Volver al Inicio</button></Link>
         {canManage && displayMode === 'list' && (
           <button onClick={() => { resetFormsAndViews(); setShowCreateForm(true); }}
             style={{ padding: '10px 15px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor:'pointer' }}

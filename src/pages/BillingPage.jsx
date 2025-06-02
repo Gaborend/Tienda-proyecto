@@ -674,7 +674,7 @@ function BillingPage() {
     <div style={pageStyle}>
       <Link to="/dashboard">
         <button style={{...secondaryButtonStyle, marginBottom: '25px'}}>
-          ← Volver al Dashboard
+          ← Volver al Inicio
         </button>
       </Link>
       <h2 style={{...sectionHeaderStyle, fontSize: '1.8em', borderBottom: 'none', marginBottom: '25px', color: '#1a2530'}}>Nueva Factura 🧾</h2>

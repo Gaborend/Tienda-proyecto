@@ -674,7 +674,7 @@ function CashBalancePage() {
       <style>{printCashSummaryStyles}</style> 
       <Link to="/dashboard" className="no-print">
         <button style={{ ...buttonStyle, backgroundColor: '#6c757d', color: 'white', marginBottom: '20px', marginRight:0 }}>
-          ← Volver al Dashboard
+          ← Volver al Inicio
         </button>
       </Link>
       <h1 style={{color: '#ffffff', textAlign: 'center', marginBottom: '30px'}} className="no-print">Gestión de Cuadre de Caja</h1>

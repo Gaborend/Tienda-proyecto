@@ -284,7 +284,7 @@ function ReportsPage() {
     <div style={pageStyle}>
       <Link to="/dashboard">
         <button style={{ ...buttonStyle, backgroundColor: '#6c757d', color: 'white', marginBottom: '20px' }}>
-          ← Volver al Dashboard
+          ← Volver al Inicio
         </button>
       </Link>
       <h1>Módulo de Reportes</h1>

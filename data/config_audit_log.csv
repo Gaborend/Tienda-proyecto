@@ -34,3 +34,5 @@ id,timestamp,user_id_performing_action,username_performing_action,action_type,ta
 38,2025-06-01T20:27:19.085284+00:00,1,soporte,USER_UPDATED,user,8.0,"{""email"": {""old"": NaN, ""new"": null}}"
 39,2025-06-02T15:51:15.515360+00:00,1,soporte,STORE_SETTINGS_UPDATED,store_config,,"{""store_logo_url"": {""old"": ""https://ibb.co/ZrZBfLX"", ""new"": """"}}"
 40,2025-06-02T15:58:36.296541+00:00,1,soporte,STORE_SETTINGS_UPDATED,store_config,,"{""store_logo_url"": {""old"": """", ""new"": ""https://ibb.co/ZrZBfLX""}}"
+41,2025-06-03T01:42:48.556315+00:00,1,soporte,USER_UPDATED,user,8.0,"{""email"": {""old"": NaN, ""new"": null}}"
+42,2025-06-03T01:43:11.788859+00:00,1,soporte,USER_UPDATED,user,8,"{""email"": {""old"": NaN, ""new"": null}}"

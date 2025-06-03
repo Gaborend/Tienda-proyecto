@@ -5,7 +5,7 @@
     "invoice_footer": "\u00a1Gracias por su compra!",
     "store_logo_url": "https://ibb.co/ZrZBfLX",
     "invoice_prefix": "INV-",
-    "next_invoice_number": 61,
+    "next_invoice_number": 71,
     "initial_cash_balance": 50000.0,
     "apply_iva_by_default": false,
     "iva_percentage": 19.0,

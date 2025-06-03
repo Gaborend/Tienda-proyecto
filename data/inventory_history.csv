@@ -125,3 +125,16 @@ id,product_id,product_code,quantity_changed,new_quantity,movement_type,notes,use
 124,16,LIP001ew,-7,315,venta,Venta asociada a factura ID: INV-59,8,2025-06-02 11:40:37.859490
 125,14,32323,-1,230,venta,Venta asociada a factura ID: INV-60,8,2025-06-02 12:51:50.790130
 126,14,32323,1,231,cancelacion_venta,Cancelación de venta ID: INV-53,8,2025-06-02 12:52:03.778688
+127,83960117,LIP00133,323,323,creacion_producto,Registro inicial de producto,8,2025-06-02 20:46:59.111005
+128,34903049,LIP0011,-4,216,ajuste_stock_reduccion,Razón: fd. Notas: ,8,2025-06-02 20:47:28.774495
+129,83960117,LIP00133,4,327,ajuste_stock_aumento,Razón: erer. Notas: ,8,2025-06-02 20:47:39.794147
+130,2,SOM001,-1,3,venta,Venta asociada a factura ID: INV-61,8,2025-06-02 20:59:18.658530
+131,16,LIP001ew,-1,314,venta,Venta asociada a factura ID: INV-62,8,2025-06-02 21:04:18.704046
+132,4,SOM002,-1,27,venta,Venta asociada a factura ID: INV-63,8,2025-06-02 21:06:21.178650
+133,5,LIP002,-1,44,venta,Venta asociada a factura ID: INV-64,8,2025-06-02 21:06:41.676931
+134,7,POL001,-1,34,venta,Venta asociada a factura ID: INV-65,8,2025-06-02 21:07:02.418117
+135,6,DEL001,-1,59,venta,Venta asociada a factura ID: INV-66,8,2025-06-02 21:10:59.952251
+136,5,LIP002,-1,43,venta,Venta asociada a factura ID: INV-67,8,2025-06-02 21:12:13.315155
+137,4,SOM002,-1,26,venta,Venta asociada a factura ID: INV-68,8,2025-06-02 21:12:27.159513
+138,9,RUB001,-1,27,venta,Venta asociada a factura ID: INV-69,8,2025-06-02 21:12:37.964107
+139,4,SOM002,-1,25,venta,Venta asociada a factura ID: INV-70,8,2025-06-02 21:14:17.676841

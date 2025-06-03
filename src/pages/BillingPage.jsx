@@ -911,7 +911,7 @@ function BillingPage() {
                                 <label htmlFor="paymentMethod" style={labelStyle}>Seleccione:</label>
                                 <select id="paymentMethod" value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} style={{...selectStyle, width:'100%', padding: '12px', height:'47px'}}>
                                     <option value="Efectivo">Efectivo</option>
-                                    <option value="Tarjeta">Tarjeta C/D</option> 
+                                    <option value="Tarjeta C/D">Tarjeta C/D</option> 
                                     <option value="Transferencia">Transferencia</option>
                                 </select>
                             </div>

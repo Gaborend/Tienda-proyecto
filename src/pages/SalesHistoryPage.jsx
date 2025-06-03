@@ -5,7 +5,6 @@ import billingService from '../services/billingService';
 import InvoiceModal from '../components/InvoiceModal';
 import configService from '../services/configService';
 
-// Estilos (se mantienen los que ya tienes)
 const pageStyle = { padding: '20px', fontFamily: 'Arial, sans-serif' };
 const tableHeaderStyle = { 
   borderBottom: '2px solid #333', padding: '12px 10px', textAlign: 'left', 
@@ -95,8 +94,6 @@ function SalesHistoryPage() {
         }
     }
 
-    // --- MODIFICACIÓN: Lógica de envío de status y payment_method ---
-    // Enviar 'status' al backend si está seleccionado (no es "Todos")
     if (submittedFilters.status) { 
         paramsForBackend.status = submittedFilters.status;
     }
@@ -106,7 +103,6 @@ function SalesHistoryPage() {
     if (submittedFilters.payment_method) {
         paramsForBackend.payment_method = submittedFilters.payment_method;
     }
-    // --- FIN DE LA MODIFICACIÓN ---
 
     console.log("FETCHSALES: Parámetros enviados al Backend:", JSON.parse(JSON.stringify(paramsForBackend)));
 
@@ -128,8 +124,6 @@ function SalesHistoryPage() {
         console.log(`FETCHSALES: Ventas tras filtro DOC (${docQuery}) quedaron (${ventasFiltradas.length})`);
       }
       
-      // --- ELIMINADO: Filtrado adicional de payment_method en frontend ---
-      // Ya que ahora se envía payment_method al backend en todos los casos donde está seleccionado.
 
       setSales(ventasFiltradas);
 

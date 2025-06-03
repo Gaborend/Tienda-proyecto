@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import customerService from '../services/customerService';
 import authService from '../services/authService';
 
-// --- ESTILOS DEFINIDOS ARRIBA PARA CONSISTENCIA (Inspirados en ServicesPage y adaptados) ---
+
 const pageOverallStyle = { padding: '20px', fontFamily: 'Arial, sans-serif', color: 'white' };
 const formSectionBoxStyle = { border: '1px solid #444', backgroundColor: '#222', padding: '20px', marginBottom: '25px', borderRadius: '8px' };
 const formFieldStyle = { display: 'flex', flexDirection: 'column', marginBottom: '16px' };
@@ -14,7 +14,6 @@ const formInputStyle = { width: '100%', padding: '10px', boxSizing: 'border-box'
 const formSelectStyle = { ...formInputStyle }; // Hereda de formInputStyle, ajusta si es necesario
 const formButtonStyle = { padding: '10px 15px', cursor: 'pointer', border: 'none', borderRadius: '4px', color: 'white', fontSize: '0.95em', // Estilo base para botones
 }; 
-// Estilo específico para el contenedor del checkbox y su etiqueta, para alineación horizontal
 const formCheckboxContainerStyle = { ...formFieldHorizontalAlignStyle, marginTop: '5px' }; // Reutiliza el estilo horizontal
 const formCheckboxLabelStyle = { marginRight: '10px', fontWeight:'bold', fontSize: '0.95em' }; // Etiqueta del checkbox
 const formCheckboxInputStyle = { transform: 'scale(1.2)', cursor: 'pointer', marginRight: '5px', verticalAlign: 'middle' }; // Estilo para el input checkbox

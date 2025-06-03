@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 import serviceService from '../services/serviceService';
 import authService from '../services/authService';
 
-// CSS para ocultar los spinners de los inputs numéricos
 const numberInputStyleFix = `
   input[type=number]::-webkit-inner-spin-button,
   input[type=number]::-webkit-outer-spin-button {
@@ -96,7 +95,7 @@ function ServicesPage() {
     const { name, value, type, checked } = event.target;
     // Para el valor del servicio, permitir solo números y un punto decimal
     if (name === "value") {
-      let processedValue; // <--- *** CORRECCIÓN AQUÍ: Variable declarada ***
+      let processedValue; 
       const sanitizedValue = value.replace(/[^0-9.]/g, ''); // Elimina caracteres no numéricos excepto el punto
       const parts = sanitizedValue.split('.'); // Divide la cadena por el punto para verificar múltiples puntos
 

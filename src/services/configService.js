@@ -94,7 +94,7 @@ export default {
   getUsers,
   createUser,
   updateUser,
-  getMe, // <-- Asegúrate de que está aquí
+  getMe, 
   getStoreSettings,
   updateStoreSettings,
   getConfigAuditLog,

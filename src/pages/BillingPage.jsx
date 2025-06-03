@@ -7,9 +7,8 @@ import serviceService from '../services/serviceService';
 import billingService from '../services/billingService';
 import authService from '../services/authService';
 import configService from '../services/configService';
-import InvoiceModal from '../components/InvoiceModal'; // Asegúrate que la ruta sea correcta
+import InvoiceModal from '../components/InvoiceModal'; 
 
-// --- ESTILOS (Como los tenías, asegúrate que estén todos aquí) ---
 const pageStyle = { 
   padding: '25px', 
   fontFamily: "'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif", 

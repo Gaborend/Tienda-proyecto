@@ -57,7 +57,7 @@ function AdminPage() {
     setLoadingAuditLog(true);
     setError('');
     try {
-      const data = await configService.getConfigAuditLog({ limit: 20 }); // O el límite que prefieras
+      const data = await configService.getConfigAuditLog({ limit: 20 }); // O el límite que se prefiera
       setAuditLog(data);
     } catch (err) {
       setError('Error al cargar el log de auditoría: ' + (err.detail || err.message || JSON.stringify(err)));

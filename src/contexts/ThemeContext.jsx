@@ -93,7 +93,6 @@ const themes = {
       quickLinkHoverBackground: '#333333',
     }
   },
-  // --- NUEVO TEMA: GRIS - ROJO ---
   grayRed: {
     name: 'Gris - Rojo Clásico',
     colors: {
@@ -139,7 +138,6 @@ const themes = {
       quickLinkHoverBackground: '#505050',// Hover para accesos rápidos (un gris más oscuro)
     }
   },
-  // --- NUEVO TEMA: NEGRO - VERDE ---
   blackGreen: {
     name: 'Negro - Verde Esmeralda',
     colors: {

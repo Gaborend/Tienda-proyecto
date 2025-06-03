@@ -6,7 +6,6 @@ import configService from '../services/configService';
 import authService from '../services/authService';
 import billingService from '../services/billingService';
 
-// Estilos (los mismos que la última versión funcional)
 const pageStyle = { padding: '20px', fontFamily: 'Arial, sans-serif', maxWidth: '900px', margin: '0 auto' };
 const sectionStyle = { 
   marginBottom: '30px', padding: '20px', border: '1px solid #ccc', 

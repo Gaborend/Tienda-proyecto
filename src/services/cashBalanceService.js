@@ -98,5 +98,5 @@ export default {
   openCashBalance,
   closeCashBalance,
   getCashRecordsHistory,
-  reopenLatestToday, // <-- Nueva función exportada
+  reopenLatestToday, 
 };

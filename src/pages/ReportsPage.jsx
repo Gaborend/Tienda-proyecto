@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import reportsService from '../services/reportsService';
 
-// --- ESTILOS COMUNES (COMO LOS TENÍAS) ---
 const pageStyle = { padding: '20px', fontFamily: 'Arial, sans-serif' };
 const sectionStyle = { 
   marginBottom: '30px', padding: '20px', border: '1px solid #ccc', 

@@ -12,7 +12,6 @@ const getAuthHeaders = () => {
   };
 };
 
-// --- FUNCIONES EXISTENTES (Se asume que están aquí y funcionan) ---
 const getSalesSummaryReport = async (params = {}) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/sales-summary`, { 

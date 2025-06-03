@@ -4,8 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import authService from '../services/authService';
 import { useTheme } from '../contexts/ThemeContext';
 
-// CORRECCIÓN AQUÍ: Usando el nombre de tu imagen "logo.jpeg"
-import companyLogo from '../assets/logo.jpeg'; // <--- AJUSTADO AL NOMBRE DE TU IMAGEN
+import companyLogo from '../assets/logo.jpeg'; 
 
 function LoginPage() {
   const { currentThemeColors } = useTheme();

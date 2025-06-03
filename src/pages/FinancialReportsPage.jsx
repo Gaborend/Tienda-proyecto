@@ -3,7 +3,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import reportsService from '../services/reportsService';
 
-// --- ESTILOS (Como los proporcionaste, con un pequeño añadido/ajuste) ---
 const pageStyle = { padding: '20px', fontFamily: 'Arial, sans-serif' };
 const sectionStyle = { marginBottom: '30px', padding: '20px', border: '1px solid #ccc', borderRadius: '8px', backgroundColor: '#fff', color: '#333' };
 const filterSectionStyle = { marginBottom: '25px', padding: '20px', border: '1px solid #ccc', borderRadius: '8px', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'flex-end', backgroundColor: '#f8f9fa'};
@@ -33,7 +32,6 @@ const parseLocalDateFromString = (dateString) => {
 };
 
 function FinancialReportsPage() {
-  // ... (toda tu lógica de estados y funciones se mantiene exactamente igual que antes) ...
   // Estados para Reporte de Estado de Inventario
   const [inventoryStatusData, setInventoryStatusData] = useState([]);
   const [rawInventoryStatusData, setRawInventoryStatusData] = useState([]); 

@@ -98,7 +98,7 @@ async def create_service(
 async def read_services(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1),
-    # Cambiamos el default a None para que sea más explícito que si no se pasa, no se filtra.
+    # Se cambia el default a None para que sea más explícito que si no se pasa, no se filtra.
     active_only: Optional[bool] = Query(None, description="Filtrar por estado activo (true/false). Si no se envía, no se filtra."),
     search: Optional[str] = Query(None, description="Buscar por código o descripción"),
     current_user: Dict[str, Any] = Depends(get_current_active_user)

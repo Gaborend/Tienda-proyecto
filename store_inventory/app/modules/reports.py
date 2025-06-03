@@ -25,7 +25,6 @@ router = APIRouter()
 
 
 
-# Modelo para los ítems dentro del reporte de ventas detallado
 class ReportSaleItemDetail(BaseModel):
     id: int
     item_type: str
@@ -133,9 +132,7 @@ async def export_dataframe_to_excel(df: pd.DataFrame, filename_prefix: str) -> S
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al generar el archivo Excel.")
 
 
-#Rutas de Reportes
 
-# REPORTE DE VENTAS 
 @router.get("/sales-summary", response_model=List[SalesReportItem], tags=["Reports - JSON"])
 async def get_sales_summary_report(
     start_date: Optional[date] = Query(None),
@@ -229,7 +226,6 @@ async def export_sales_summary_excel(
     df_to_export = pd.DataFrame(data_to_export)
     return await export_dataframe_to_excel(df_to_export, "sales_summary")
 
-# REPORTE DE ESTADO DE INVENTARIO 
 @router.get("/inventory-status", response_model=List[InventoryStatusReportItem], tags=["Reports - JSON"])
 async def get_inventory_status_report(
     active_only: bool = Query(True),
@@ -274,7 +270,6 @@ async def export_inventory_status_excel(
     return await export_dataframe_to_excel(df_to_export, "inventory_status")
 
 
-# REPORTE DE MOVIMIENTOS DE INVENTARIO
 @router.get("/inventory-movements", response_model=List[InventoryMovementReportItem], tags=["Reports - JSON"])
 async def get_inventory_movements_report(
     start_date: Optional[date] = Query(None),
@@ -324,7 +319,6 @@ async def export_inventory_movements_excel(
     return await export_dataframe_to_excel(df_to_export, "inventory_movements")
 
 
-#  REPORTE DE SERVICIOS REALIZADOS
 @router.get("/services-performed", response_model=List[ServicePerformedReportItem], tags=["Reports - JSON"])
 async def get_services_performed_report(
     start_date: Optional[date] = Query(None),
@@ -390,7 +384,6 @@ async def export_services_performed_excel(
         df_to_export['sale_date'] = pd.to_datetime(df_to_export['sale_date']).dt.strftime('%Y-%m-%d %H:%M:%S')
     return await export_dataframe_to_excel(df_to_export, "services_performed")
 
-# 5. REPORTE DE CLIENTES FRECUENTES
 @router.get("/frequent-customers", response_model=List[FrequentCustomerReportItem], tags=["Reports - JSON"])
 async def get_frequent_customers_report(
     start_date: Optional[date] = Query(None),
@@ -468,7 +461,6 @@ async def export_frequent_customers_excel(
     df_to_export = pd.DataFrame([item.dict() for item in report_items])
     return await export_dataframe_to_excel(df_to_export, "frequent_customers")
 
-#  REPORTE DE DESEMPEÑO FINANCIERO 
 @router.get("/financial-summary", response_model=FinancialSummaryReportItem, tags=["Reports - JSON"])
 async def get_financial_summary_report(
     start_date: date = Query(..., description="Fecha de inicio del período"),

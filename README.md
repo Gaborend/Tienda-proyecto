@@ -1,5 +1,4 @@
 # Tienda-proyecto
-hola
 # Authentication Service
 
 Este proyecto es absado en una tienda de maquillaje interactiva para el usuario.

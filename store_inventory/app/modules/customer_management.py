@@ -6,7 +6,6 @@ from pathlib import Path
 from pydantic import BaseModel, EmailStr, Field
 import json 
 
-# Asumiendo que estas son tus importaciones de configuración existentes
 from app.modules.configuration import (
     get_current_active_user,
     get_admin_or_support_user,
@@ -23,7 +22,6 @@ CUSTOMER_COLUMNS = ["id", "document_type", "document_number", "full_name", "phon
 CUSTOMER_HISTORY_FILE = DATA_DIR / "customer_history.csv"
 CUSTOMER_HISTORY_COLUMNS = ["id", "customer_id", "action", "details", "user_id", "date"]
 
-# --- Modelos Pydantic (sin cambios respecto a tu original) ---
 class CustomerBase(BaseModel):
     document_type: str = Field(..., description="Tipo de identificación (Cédula, Pasaporte, NIT, etc.)")
     document_number: str = Field(..., description="Número de identificación")
@@ -60,7 +58,6 @@ class CustomerHistoryResponse(BaseModel):
     user_id: int
     date: datetime
 
-# --- Función de Log (sin cambios respecto a tu original) ---
 def log_customer_action(customer_id: int, action: str, user_id: int, details: Dict):
     history_df = load_df(CUSTOMER_HISTORY_FILE, columns=CUSTOMER_HISTORY_COLUMNS)
     
@@ -70,7 +67,6 @@ def log_customer_action(customer_id: int, action: str, user_id: int, details: Di
         log_user_id = int(user_id)
     except (ValueError, TypeError):
         # Manejar error si los IDs no son convertibles a int, aunque deberían serlo.
-        # Podrías loguear este error o lanzar una excepción si es crítico.
         print(f"Error: IDs inválidos para log_customer_action. Customer ID: {customer_id}, User ID: {user_id}")
         return # No loguear si los IDs son inválidos
 
@@ -91,7 +87,6 @@ def log_customer_action(customer_id: int, action: str, user_id: int, details: Di
     history_df = pd.concat([history_df, pd.DataFrame([log_entry])], ignore_index=True)
     save_df(history_df, CUSTOMER_HISTORY_FILE)
 
-# --- NUEVA Función Helper para Sanitizar Diccionarios de Cliente ---
 def sanitize_customer_dict_for_response(customer_dict: Dict[str, Any]) -> Dict[str, Any]:
     processed_dict = customer_dict.copy()
 
@@ -173,7 +168,6 @@ def sanitize_customer_dict_for_response(customer_dict: Dict[str, Any]) -> Dict[s
 
     return processed_dict
 
-# --- Rutas del API Router (Corregidas y/o Mejoradas) ---
 
 @router.post("/", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
 async def create_customer(

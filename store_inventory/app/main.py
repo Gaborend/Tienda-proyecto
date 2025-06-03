@@ -19,7 +19,7 @@ app = FastAPI(
     version="1.0.0"
 )
 origins = [
-    "http://localhost:5173", # El origen d frontend Vite
+    "http://localhost:5173", # El origen de frontend Vite
     
 ]
 app.add_middleware(

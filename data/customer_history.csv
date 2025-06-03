@@ -55,3 +55,5 @@ id,customer_id,action,details,user_id,date
 54,5,modificacion,"{""document_type"": ""CC"", ""document_number"": ""1001144682"", ""full_name"": "" Alejandro Ruiz "", ""phone"": ""3013081507"", ""email"": ""bruiz4@gmail.com"", ""address"": ""nMNNN"", ""is_active"": true}",8,2025-06-01 13:51:02.364376
 55,5,modificacion,"{""document_type"": ""CC"", ""document_number"": ""1001144682"", ""full_name"": "" Alejandro Ruiz "", ""phone"": ""3013081507"", ""email"": ""bruiz4@gmail.com"", ""address"": ""nMNNN"", ""is_active"": false}",8,2025-06-01 14:32:02.394220
 56,5,modificacion,"{""document_type"": ""CC"", ""document_number"": ""1001144682"", ""full_name"": "" Alejandro Ruiz "", ""phone"": ""3013081507"", ""email"": ""bruiz4@gmail.com"", ""address"": ""nMNNN"", ""is_active"": true}",8,2025-06-01 14:32:18.270516
+57,2,inactivacion,"{""inactivated"": true}",8,2025-06-02 11:37:16.813412
+58,2,modificacion,"{""document_type"": ""NIT"", ""document_number"": ""900123456-7"", ""full_name"": ""Isabela casillas "", ""phone"": ""604-9876543"", ""email"": null, ""address"": null, ""is_active"": true}",8,2025-06-02 11:37:25.412661

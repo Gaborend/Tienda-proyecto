@@ -40,7 +40,6 @@ class ProductUpdate(BaseModel):
     cost_value: Optional[float] = Field(None, ge=0)
     sale_value: Optional[float] = Field(None, ge=0)
     is_active: Optional[bool] = None 
-    # La cantidad se actualiza por un endpoint específico de "add stock"
 
 class ProductResponse(ProductBase):
     id: int
@@ -63,12 +62,11 @@ class InventoryMovementLog(BaseModel):
     product_code: str
     quantity_changed: int
     new_quantity: int
-    movement_type: str # e.g., "venta", "devolucion_cliente", "compra_proveedor", "ajuste_manual_mas", "ajuste_manual_menos"
+    movement_type: str #  "venta", "devolucion_cliente", "compra_proveedor", "ajuste_manual_mas", "ajuste_manual_menos"
     notes: Optional[str] = None
     user_id: int
     date: datetime
     
-#funciones de utilidad específicas del módulo 
 def log_inventory_movement(
     product_id: int,
     product_code: str,
@@ -134,7 +132,7 @@ async def create_product(
     new_product_data["is_active"] = True
     new_product_data["date_added"] = now
     new_product_data["last_updated"] = now
-    new_product_data["low_stock_alert_sent"] = False # Nueva columna
+    new_product_data["low_stock_alert_sent"] = False 
     new_product_data["created_by_user_id"] = current_user["id"]
     new_product_data["updated_by_user_id"] = current_user["id"]
 
@@ -155,7 +153,7 @@ async def create_product(
     return ProductResponse(**new_product_data)
 
 
-@router.get("/", response_model=List[ProductResponse]) # Asegúrate que ProductResponse esté definido/importado
+@router.get("/", response_model=List[ProductResponse])
 async def read_products(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1),
@@ -209,7 +207,6 @@ async def read_products(
     # Aplicar paginación después de todos los filtros
     paginated_df = inventory_df.iloc[skip : skip + limit]
 
-    # --- Sanitización de Datos para Pydantic ---
     df_for_response = paginated_df.copy()
     
     # 1. Reemplazar NaN genéricos, pd.NA y NaT (para fechas) con None.
@@ -235,8 +232,6 @@ async def read_products(
     # Por ejemplo, si `id` se leyó como float por tener NaN y luego se hizo None:
     if 'id' in df_for_response.columns and df_for_response['id'].isnull().any():
         print(f"ADVERTENCIA: La columna 'id' contiene valores nulos después de la sanitización. Esto fallará si 'id' es obligatorio en ProductResponse.")
-        # Podrías aquí decidir filtrar estas filas o asignar un ID por defecto si la lógica lo permite (no recomendado para IDs)
-        # Ejemplo de filtrado: df_for_response = df_for_response.dropna(subset=['id'])
 
     # Convertir a lista de diccionarios
     records = df_for_response.to_dict(orient="records")
@@ -399,7 +394,6 @@ async def get_inventory_history(
     history_df = history_df.sort_values(by="date", ascending=False)
     return history_df.iloc[skip : skip + limit].to_dict(orient="records")
 
-# Helper function to be used by billing module
 def update_stock_after_sale(product_id: int, quantity_sold: int, user_id: int, sale_id: str):
     inventory_df = load_df(INVENTORY_FILE, columns=INVENTORY_COLUMNS)
     product_index = inventory_df[inventory_df["id"] == product_id].index

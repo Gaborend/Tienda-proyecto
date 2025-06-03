@@ -4,12 +4,12 @@ import pandas as pd
 from datetime import datetime, date 
 import json
 
-from pydantic import BaseModel, Field # Asegúrate que esté al inicio del archivo
+from pydantic import BaseModel, Field 
 
-# Asumo que estas importaciones vienen de tu módulo de configuración y otros módulos
+
 from app.modules.configuration import (
     get_current_active_user,
-    get_admin_or_support_user, # Descomenta si lo usas específicamente aquí
+    get_admin_or_support_user, 
     load_df,
     save_df,
     DATA_DIR,
@@ -18,7 +18,7 @@ from app.modules.configuration import (
 # Para el resumen de ventas en el cierre de caja
 from app.modules.billing import SALES_FILE, SALES_COLUMNS 
 
-# --- Definición de Modelos Pydantic ---
+
 class ExpenseItem(BaseModel):
     concept: str = Field(..., min_length=3)
     value: float = Field(..., ge=0)
@@ -56,7 +56,7 @@ class CashRecordResponse(BaseModel):
     closed_by_username: Optional[str] = None
     closing_time: Optional[datetime] = None
     status: str
-# --- Fin Modelos Pydantic ---
+
 
 router = APIRouter()
 
@@ -140,7 +140,7 @@ async def get_todays_cash_record_status(
     today_server_date = date.today()
     print(f"--- Endpoint /today: La fecha del servidor (date.today()) es: {today_server_date} ---")
     cash_records_df = load_df(CASH_RECORDS_FILE, columns=CASH_RECORDS_COLUMNS)
-    # ... (resto de la función como la tenías, usando sanitize_record_dict antes de retornar)
+   
     if cash_records_df.empty:
         print(f"--- Endpoint /today: No hay registros en {CASH_RECORDS_FILE}. Devolviendo None. ---")
         return None
@@ -163,14 +163,12 @@ async def get_todays_cash_record_status(
     open_today_df = todays_record_series_df[todays_record_series_df['status'] == 'open']
     if not open_today_df.empty:
         record_to_show_series = open_today_df.iloc[-1]
-        # print(f"--- Endpoint /today: Se encontró un registro ABIERTO para {today_server_date}. ID: {record_to_show_series.get('id')} ---")
+        
     else: 
         closed_today_df = todays_record_series_df[todays_record_series_df['status'] == 'closed']
         if not closed_today_df.empty:
             record_to_show_series = closed_today_df.iloc[-1]
-            # print(f"--- Endpoint /today: No hay abiertos. Se encontró un registro CERRADO para {today_server_date}. ID: {record_to_show_series.get('id')} ---")
         else:
-            # print(f"--- Endpoint /today: No hay registros abiertos ni cerrados para {today_server_date}. Devolviendo None. ---")
             return None
     if record_to_show_series is None: return None
     record_dict = record_to_show_series.to_dict()
@@ -183,7 +181,6 @@ async def open_cash_balance(
     open_data: Optional[CashBalanceOpen] = None, 
     current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
-    # ... (lógica de open_cash_balance como la tenías, usando sanitize_record_dict antes de retornar)
     if current_user["role"] not in ["admin", "caja", "soporte"]:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="No tiene permisos para abrir caja.")
     today_server_date = date.today()
@@ -265,8 +262,6 @@ async def close_cash_balance(
             record_date_to_close = open_record_series['date_obj']
             print(f"--- Endpoint /close: Cerrando caja para {record_date_to_close} (ID: {open_record_series['id']}) ---")
         else:
-            # Podrías añadir lógica para buscar el último abierto de un día anterior si se permite cerrar días pasados.
-            # Por ahora, si no hay uno abierto para "today_server_date", se lanza error.
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No hay un cuadre de caja abierto para hoy ({today_server_date.strftime('%d/%m/%Y')}) para cerrar.")
     else:
         raise HTTPException(status_code=500, detail="Falta la columna 'date' en el archivo de registros de caja.")
@@ -382,7 +377,6 @@ async def reopen_latest_today_cash_record(
     idx_to_update_series = cash_records_df[cash_records_df["id"] == record_id_to_reopen].index
 
     if idx_to_update_series.empty:
-        # Esto sería muy raro
         raise HTTPException(status_code=500, detail="Error interno: No se pudo encontrar el índice del registro a reabrir.")
     
     idx_to_update = idx_to_update_series[0]
@@ -422,7 +416,7 @@ async def read_cash_records(
     status_filter: Optional[str] = Query(None, pattern="^(open|closed)$", alias="status"),
     current_user: Dict[str, Any] = Depends(get_current_active_user)
 ):
-    # ... (lógica de read_cash_records como la tenías, usando sanitize_record_dict antes de retornar)
+    
     cash_records_df = load_df(CASH_RECORDS_FILE, columns=CASH_RECORDS_COLUMNS)
     if cash_records_df.empty: return []
     if 'date' not in cash_records_df.columns or cash_records_df['date'].isnull().all(): return []

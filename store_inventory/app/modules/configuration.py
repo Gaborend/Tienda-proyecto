@@ -153,7 +153,7 @@ def log_config_audit_action(
     # Asegurar que las columnas coincidan antes de concatenar, especialmente si el CSV estaba vacío
     for col in CONFIG_AUDIT_LOG_COLUMNS:
         if col not in new_log_df.columns:
-            new_log_df[col] = None # o pd.NA
+            new_log_df[col] = None 
 
     audit_df = pd.concat([audit_df, new_log_df], ignore_index=True)
     save_df(audit_df, CONFIG_AUDIT_LOG_FILE)
@@ -248,9 +248,6 @@ async def read_users(current_user_actor: Dict[str, Any] = Depends(get_admin_or_s
     if users_df.empty: 
         return []
 
-    # --- INICIO DE LA CORRECCIÓN ---
-    # Reemplazar NaN y posibles strings vacíos en la columna 'email' con None
-    # para que Pydantic Optional[EmailStr] los maneje correctamente.
     if 'email' in users_df.columns:
         # Tratar NaNs (que Pandas podría leer de celdas vacías si interpreta la columna como float/object)
         users_df['email'] = users_df['email'].where(pd.notna(users_df['email']), None)
@@ -360,14 +357,9 @@ async def read_users_me(current_user: Dict[str, Any] = Depends(get_current_activ
     # Quitar el hash de la contraseña para la respuesta
     current_user_response_data = {k: v for k, v in current_user.items() if k != "hashed_password"}
 
-    # --- INICIO DE LA CORRECCIÓN ---
-    # Limpiar el campo email antes de pasarlo a UserResponse para validación.
-    # Si el email es NaN (Not a Number, común con Pandas para celdas vacías) o un string vacío,
-    # lo convertimos a None, que es aceptable para Optional[EmailStr].
     if 'email' in current_user_response_data:
         if pd.isna(current_user_response_data['email']) or current_user_response_data['email'] == '':
             current_user_response_data['email'] = None
-    # --- FIN DE LA CORRECCIÓN ---
 
     return UserResponse(**current_user_response_data)
 
@@ -455,7 +447,7 @@ async def get_config_audit_log(
         # target_entity_id_filter es string, la columna en el df también debería ser tratada como string para el filtro
         if 'target_entity_id' in audit_df.columns:
             audit_df = audit_df[audit_df["target_entity_id"].astype(str) == target_entity_id_filter] 
-            # O .str.contains si quieres búsqueda parcial    
+            # O .str.contains si se quiere búsqueda parcial    
     
     if start_date and 'timestamp_dt' in audit_df.columns:
         audit_df = audit_df.dropna(subset=['timestamp_dt']) # Quitar NaT antes de comparar fechas
@@ -535,13 +527,10 @@ def get_store_settings_sync() -> StoreConfig:
 @router.get("/users/{user_id_to_fetch}", response_model=UserResponse, tags=["users"])
 async def read_user_details_by_id(
     user_id_to_fetch: int,
-    # Considera añadir una dependencia de autenticación si quieres proteger este endpoint:
-    # current_requesting_user: Dict[str, Any] = Depends(get_current_active_user) 
 ):
     """
     Obtiene los detalles de un usuario específico por su ID.
     """
-    # Asegúrate que USERS_FILE y UserResponse estén definidos y accesibles aquí
     users_df = load_df(USERS_FILE, columns=["id", "username", "hashed_password", "full_name", "email", "role", "is_active"])
     if users_df.empty:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No hay usuarios registrados")

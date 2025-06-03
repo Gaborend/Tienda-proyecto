@@ -9,11 +9,11 @@ id,code,description,brand,quantity,cost_value,sale_value,date_added,last_updated
 8,MAS001,Máscara de Pestañas Volumen Extremo - Negro,OjosDeEstrella,55,6.5,14.75,2025-05-24 05:20:18.024360,2025-05-31 21:14:37.040787,True,Ojos,False,1,8
 9,RUB001,Rubor en Crema Larga Duración - Tono Durazno,MejillasRadiantes,28,8.75,18.5,2025-05-24 05:20:24.925816,2025-05-31 21:14:39.799164,True,Rubores,False,1,8
 10,PRI001,Primer Facial Minimizador de Poros ,PielPerfecta,54,11.0,24.0,2025-05-24 05:20:49.569165,2025-06-01 16:03:31.146987,True,Primers,False,1,1
-11,XY001,Delineador resiste al agua,gato,36,8.0,20.0,2025-05-24 20:08:03.795293,2025-06-01 15:49:01.499639,True,PielPerfecta,False,1,1
+11,XY001,Delineador resiste al agua,gato,37,8.0,20.0,2025-05-24 20:08:03.795293,2025-06-02 10:59:32.809358,True,PielPerfecta,False,1,1
 12,LP003,Producto1,Marca1,50,30000.0,80000.0,2025-05-26 17:05:44.886525,2025-05-31 21:14:31.035783,True,categoria2,False,1,8
 13,PP001,descripcio1,marca1,20,20000.0,500000.0,2025-05-26 18:58:36.482296,2025-05-31 21:14:25.486602,True,categoria1,False,1,8
-14,32323,productooo,fdgd,231,2424.0,242.0,2025-05-26 19:22:07.165131,2025-06-01 16:03:50.417857,True,fdfd,False,1,1
+14,32323,productooo,fdgd,231,2424.0,242.0,2025-05-26 19:22:07.165131,2025-06-02 12:52:03.735858,True,fdfd,False,1,8
 15,LIP003,Sombra de Ojos Paleta Nude 22,221,34,222.0,400.0,2025-05-27 02:41:06.110382,2025-06-01 16:04:25.810634,True,4343,False,1,1
-16,LIP001ew,Sombra de Ojos Paleta Nu,BellezaTotal,322,2322.0,322.0,2025-05-30 18:09:33.919205,2025-06-01 14:17:13.106701,True,Ojos,False,1,8
-34903049,LIP0011,Sombra de Ojos Paleta Nu,CosmeticosEstrella,222,323.0,32323.0,2025-05-30 19:39:45.362283,2025-06-01 14:50:07.675014,True,Labiales,False,1,8
-97466568,LIP001333,gfg,efdgf,3232,23.0,23.0,2025-05-31 21:27:46.748287,2025-05-31 21:27:46.748287,True,gdg,False,1,1
+16,LIP001ew,Sombra de Ojos Paleta Nu,BellezaTotal,315,2322.0,322.0,2025-05-30 18:09:33.919205,2025-06-02 11:40:37.815464,True,Ojos,False,1,8
+34903049,LIP0011,Sombra de Ojos Paleta Nu,CosmeticosEstrella,220,323.0,32323.0,2025-05-30 19:39:45.362283,2025-06-02 10:58:52.526245,True,Labiales,False,1,1
+97466568,LIP001333,gfg,efdgf,3230,23.0,23.0,2025-05-31 21:27:46.748287,2025-06-02 10:58:22.921376,True,gdg,False,1,1

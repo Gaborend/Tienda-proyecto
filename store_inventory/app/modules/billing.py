@@ -19,7 +19,7 @@ from app.modules.customer_management import CUSTOMERS_FILE, CUSTOMER_COLUMNS
 from app.modules.inventory_management import (
     INVENTORY_FILE, INVENTORY_COLUMNS, 
     update_stock_after_sale, revert_stock_after_sale_cancellation,
-    ProductResponse as InventoryProductResponse # Para verificar stock
+    ProductResponse as InventoryProductResponse 
 )
 from app.modules.service_management import SERVICES_FILE, SERVICES_COLUMNS, ServiceResponse
 
@@ -178,7 +178,7 @@ async def create_sale(
             "total_item_price": total_item_price
         })
 
-    # >>> INICIO CAMBIO: Lógica de cálculo de descuentos actualizada <<<
+   
     subtotal_before_discount = subtotal 
     actual_applied_discount_value = 0.0
     original_discount_percentage_input = sale_in.discount_percentage 
@@ -190,7 +190,7 @@ async def create_sale(
         actual_applied_discount_value = (subtotal_before_discount * sale_in.discount_percentage / 100)
     
     subtotal_after_discount = subtotal_before_discount - actual_applied_discount_value
-    # >>> FIN CAMBIO <<<
+ 
     
     iva_amount = (subtotal_after_discount * iva_percentage / 100) if apply_iva_globally else 0.0
     total_amount = subtotal_after_discount + iva_amount
@@ -266,9 +266,7 @@ async def read_sales(
 
     # Aplicación de filtros
     if invoice_number:
-        # --- CAMBIO AQUÍ ---
-        # Antes: sales_df = sales_df[sales_df["invoice_number"].str.contains(invoice_number, case=False, na=False)]
-        # Ahora (coincidencia exacta, sensible a mayúsculas/minúsculas):
+        #(coincidencia exacta, sensible a mayúsculas/minúsculas):
         sales_df = sales_df[sales_df["invoice_number"] == invoice_number]
         # -------------------
 
@@ -276,9 +274,6 @@ async def read_sales(
         # Para mayor robustez con tipos de datos en el CSV:
         if "customer_id" in sales_df.columns:
             sales_df['customer_id'] = pd.to_numeric(sales_df['customer_id'], errors='coerce')
-            # Opcional: si quieres ser estricto y solo comparar con enteros no NaN:
-            # sales_df = sales_df.dropna(subset=['customer_id'])
-            # sales_df['customer_id'] = sales_df['customer_id'].astype(int) # O pd.Int64Dtype()
         sales_df = sales_df[sales_df["customer_id"] == customer_id]
     
     if product_id is not None:
@@ -366,7 +361,7 @@ async def read_sale(
     
     sale_dict = sale_data_series.iloc[0].to_dict()
     
-    #  Convertir NaN a None para campos opcionales ---
+    #  Convertir NaN a None para campos opcionales
     if pd.isna(sale_dict.get("cancellation_reason")):
         sale_dict["cancellation_reason"] = None
     if pd.isna(sale_dict.get("cancelled_by_user_id")):
@@ -383,7 +378,6 @@ async def read_sale(
         
     try:
         items_list_obj = json.loads(sale_dict["items"])
-        # Similar al anterior, asegurar que los items son válidos para SaleResponseItem
         sale_dict["items"] = [SaleResponseItem(**item) for item in items_list_obj]
     except (json.JSONDecodeError, TypeError):
         sale_dict["items"] = []
@@ -447,11 +441,11 @@ async def cancel_sale(
     
     # Convertir NaN a None para campos opcionales
     # Es crucial hacer esto DESPUÉS de .to_dict() y ANTES de SaleResponse()
-    if pd.isna(cancelled_sale_dict.get("cancellation_reason")): # Aunque lo acabamos de setear
+    if pd.isna(cancelled_sale_dict.get("cancellation_reason")): 
         cancelled_sale_dict["cancellation_reason"] = None
-    if pd.isna(cancelled_sale_dict.get("cancelled_by_user_id")): # Aunque lo acabamos de setear
+    if pd.isna(cancelled_sale_dict.get("cancelled_by_user_id")): 
         cancelled_sale_dict["cancelled_by_user_id"] = None
-    if pd.isna(cancelled_sale_dict.get("cancellation_date")): # Aunque lo acabamos de setear
+    if pd.isna(cancelled_sale_dict.get("cancellation_date")): 
         cancelled_sale_dict["cancellation_date"] = None
     
     # Estos son más propensos a ser NaN si la venta original no los usó

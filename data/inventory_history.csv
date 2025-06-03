@@ -117,3 +117,11 @@ id,product_id,product_code,quantity_changed,new_quantity,movement_type,notes,use
 116,10,PRI001,1,54,cancelacion_venta,Cancelación de venta ID: INV-45,1,2025-06-01 16:03:31.156119
 117,14,32323,1,231,cancelacion_venta,Cancelación de venta ID: INV-46,1,2025-06-01 16:03:50.436854
 118,15,LIP003,-1,34,venta,Venta asociada a factura ID: INV-54,1,2025-06-01 16:04:25.861517
+119,97466568,LIP001333,-1,3231,venta,Venta asociada a factura ID: INV-55,1,2025-06-02 10:49:45.415278
+120,34903049,LIP0011,-1,221,venta,Venta asociada a factura ID: INV-56,1,2025-06-02 10:51:29.496598
+121,97466568,LIP001333,-1,3230,venta,Venta asociada a factura ID: INV-57,1,2025-06-02 10:58:22.964505
+122,34903049,LIP0011,-1,220,venta,Venta asociada a factura ID: INV-58,1,2025-06-02 10:58:52.558517
+123,11,XY001,1,37,cancelacion_venta,Cancelación de venta ID: INV-52,1,2025-06-02 10:59:32.850637
+124,16,LIP001ew,-7,315,venta,Venta asociada a factura ID: INV-59,8,2025-06-02 11:40:37.859490
+125,14,32323,-1,230,venta,Venta asociada a factura ID: INV-60,8,2025-06-02 12:51:50.790130
+126,14,32323,1,231,cancelacion_venta,Cancelación de venta ID: INV-53,8,2025-06-02 12:52:03.778688
